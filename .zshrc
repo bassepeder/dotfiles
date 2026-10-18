@@ -97,3 +97,5 @@ btop() { command btop --themes-dir ~/.config/btop/themes/$(defaults read -g Appl
 
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="/opt/homebrew/opt/rustup/bin:$PATH"
+# sbt would otherwise run on Homebrew's latest openjdk; Metals supports 17 and 21
+export JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
