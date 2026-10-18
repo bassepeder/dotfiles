@@ -1,0 +1,41 @@
+disableStartupPopups: true
+promptToReturnFromSubprocess: false
+notARepository: "skip"
+gui:
+  scrollHeight: 4
+  scrollPastBottom: false
+  commitLength:
+    show: true
+  mouseEvents: false
+  nerdFontsVersion: "3"
+  showFileTree: true
+  showBottomLine: false
+  showDivergenceFromBaseBranch: arrowAndNumber
+  skipRewordInEditorWarning: true
+refresher:
+  refreshInterval: 60
+git:
+  overrideGpg: true
+  diffRenderers:
+    - command: delta --paging=never --features catppuccin-{{if eq .colorScheme "light"}}latte{{else}}mocha{{end}}
+    - type: rawGit
+      args: ["--color=always"]
+os:
+  editPreset: nvim
+update:
+  method: never
+quitOnTopLevelReturn: false
+customCommands:
+  - key: "D"
+    prompts:
+      - type: "menu"
+        title: "Clipboard diff"
+        options:
+          - name: "apply"
+            value: 'echo "$(pbpaste)" | git apply -'
+          - name: "copy (markdown)"
+            value: "{ echo '```diff'; git diff --cached; echo; echo '```'; } | pbcopy"
+          - name: "copy (slack)"
+            value: "{ echo '```'; git diff --cached; echo '```'; } | pbcopy"
+    command: "{{index .PromptResponses 0}}"
+    context: "localBranches"
