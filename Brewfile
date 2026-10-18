@@ -24,6 +24,8 @@ brew "lazygit"
 brew "btop"
 brew "git-delta"
 brew "rustup"
+brew "openjdk@21"
+brew "sbt"
 
 cask "kitty"
 cask "neovide-app"
