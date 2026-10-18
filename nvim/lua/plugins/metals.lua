@@ -1,0 +1,53 @@
+return {
+
+  -- scala lsp
+  {
+    "scalameta/nvim-metals",
+    ft = { "scala", "sbt", "java" },
+    keys = {
+      {
+        "<leader>mc",
+        function()
+          require("metals").compile_cascade()
+        end,
+        desc = "Metals compile cascade",
+      },
+      {
+        "<leader>me",
+        function()
+          require("metals").commands()
+        end,
+        desc = "Metals menu",
+      },
+    },
+    config = function()
+      local metals = require("metals")
+      local config = metals.bare_config()
+
+      config.init_options.statusBarProvider = "on"
+      config.settings = {
+        serverVersion = "latest.snapshot",
+        inlayHints = {
+          byNameParameters = { enable = false },
+          hintsInPatternMatch = { enable = false },
+          implicitArguments = { enable = false },
+          implicitConversions = { enable = false },
+          inferredTypes = { enable = false },
+          typeParameters = { enable = false },
+        },
+      }
+
+      config.capabilities = require("blink.cmp").get_lsp_capabilities()
+
+      -- Autocmd that will actually be in charge of starting the whole thing
+      local nvim_metals_group = vim.api.nvim_create_augroup("nvim-metals", { clear = true })
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = { "scala", "sbt", "java" },
+        callback = function()
+          metals.initialize_or_attach(config)
+        end,
+        group = nvim_metals_group,
+      })
+    end,
+  },
+}

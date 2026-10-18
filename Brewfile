@@ -1,0 +1,32 @@
+# yabai is built from bassepeder/yabai instead (see install.sh); skhd's launchd label is still com.koekeishiya.skhd
+tap "asmvik/formulae"
+tap "felixkratz/formulae"
+tap "writronic/tap"
+
+brew "asmvik/formulae/skhd"
+brew "felixkratz/formulae/borders"
+
+brew "jq"
+
+brew "starship"
+brew "zsh-autosuggestions"
+brew "zsh-syntax-highlighting"
+brew "fzf"
+brew "zoxide"
+brew "eza"
+brew "bat"
+brew "fd"
+brew "ripgrep"
+brew "fnm"
+
+brew "neovim"
+brew "lazygit"
+brew "btop"
+brew "git-delta"
+brew "rustup"
+
+cask "kitty"
+cask "neovide-app"
+cask "firefox"
+cask "writronic/tap/macursor"
+cask "font-jetbrains-mono-nerd-font"

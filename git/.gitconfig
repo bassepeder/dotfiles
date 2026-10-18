@@ -1,0 +1,51 @@
+[user]
+	name = Bastian Pedersen
+[core]
+	ignorecase = false
+	editor = nvim
+	pager = delta --features catppuccin-$(defaults read -g AppleInterfaceStyle >/dev/null 2>&1 && echo mocha || echo latte)
+[commit]
+	gpgsign = false
+[fetch]
+	prune = true
+[pull]
+	rebase = true
+[init]
+	defaultBranch = main
+[push]
+	autoSetupRemote = true
+[merge]
+	conflictStyle = zdiff3
+[rerere]
+	enabled = true
+[rebase]
+	autoStash = true
+[blame]
+	date = relative
+[alias]
+	l = log --pretty=format:\"%Cred%h%Creset %Cblue%ad%Creset %Cgreen%an%Creset %s\"
+[interactive]
+	diffFilter = delta --color-only --features catppuccin-$(defaults read -g AppleInterfaceStyle >/dev/null 2>&1 && echo mocha || echo latte)
+[delta]
+	navigate = false
+	true-color = always
+[delta "catppuccin-latte"]
+	light = true
+	syntax-theme = Catppuccin Latte
+[delta "catppuccin-mocha"]
+	syntax-theme = Catppuccin Mocha
+	commit-decoration-style = "#6c7086 bold box ul"
+	dark = true
+	file-decoration-style = "#6c7086"
+	file-style = "#cdd6f4"
+	hunk-header-decoration-style = "#6c7086 box ul"
+	hunk-header-file-style = bold
+	hunk-header-line-number-style = "bold #a6adc8"
+	hunk-header-style = file line-number syntax
+	minus-emph-style = "bold syntax #694559"
+	minus-style = "syntax #493447"
+	plus-emph-style = "bold syntax #4e6356"
+	plus-style = "syntax #394545"
+	map-styles = "bold purple => syntax \"#5b4e74\", bold blue => syntax \"#445375\", bold cyan => syntax \"#446170\", bold yellow => syntax \"#6b635b\""
+[include]
+	path = ~/.gitconfig.local
