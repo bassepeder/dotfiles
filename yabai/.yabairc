@@ -24,14 +24,10 @@ yabai -m config right_padding 8
 yabai -m config window_gap 12
 
 #space 1: browser
-yabai -m rule --add app="Vivaldi" space=^1
 yabai -m rule --add app="Firefox" space=^1
-yabai -m rule --add app="Brave" space=^1
 
 #space 2: terminal
-yabai -m rule --add app="Ghostty" space=^2
 yabai -m rule --add app="kitty" space=^2
-yabai -m rule --add app="Things" space=^2
 
 # space 3: dev
 yabai -m rule --add app="JetBrains Rider*" space=^3
@@ -42,7 +38,7 @@ yabai -m rule --add app="WebStorm-*" space=^4
 # things which create floating children
 yabai -m rule --add title="JetBrains Toolbox" manage=off mouse_follows_focus=off
 yabai -m rule --add title="Audio Hijack Session List" manage=off mouse_follows_focus=off
-yabai -m rule --add title="Settings" manage=off mouse_follows_focus=off     # every JetBrains product settings
+yabai -m rule --add title="Settings" manage=off mouse_follows_focus=off # every JetBrains product settings
 yabai -m rule --add title="Raycast Settings" manage=off mouse_follows_focus=off
 yabai -m rule --add title="Leauge of Legends" manage=off
 yabai -m rule --add app="System Settings" manage=off
