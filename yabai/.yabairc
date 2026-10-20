@@ -28,6 +28,7 @@ yabai -m rule --add app="Firefox" space=^1
 
 #space 2: terminal
 yabai -m rule --add app="kitty" space=^2
+yabai -m rule --add app="neovide" space=^2
 
 # space 3: dev
 yabai -m rule --add app="JetBrains Rider*" space=^3
