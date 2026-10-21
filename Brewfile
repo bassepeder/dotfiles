@@ -20,6 +20,7 @@ brew "ripgrep"
 brew "fnm"
 
 cask "docker-desktop"
+cask "hidden-bar"
 cask "cap"
 brew "neovim"
 brew "lazygit"
