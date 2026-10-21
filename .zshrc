@@ -56,7 +56,9 @@ if command -v bat >/dev/null; then
 fi
 
 unalias neovide 2>/dev/null
+
 alias lg="lazygit"
+alias v="nvim"
 
 command -v fnm >/dev/null && eval "$(fnm env --use-on-cd)"
 export STARSHIP_CACHE="$HOME/.cache/starship"
