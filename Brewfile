@@ -28,6 +28,7 @@ brew "git-delta"
 brew "rustup"
 brew "openjdk@21"
 brew "sbt"
+brew "coursier"
 
 cask "kitty"
 cask "neovide-app"
