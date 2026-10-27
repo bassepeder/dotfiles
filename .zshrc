@@ -101,3 +101,7 @@ export PATH="$HOME/.local/bin:$PATH"
 export PATH="/opt/homebrew/opt/rustup/bin:$PATH"
 # sbt would otherwise run on Homebrew's latest openjdk; Metals supports 17 and 21
 export JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
+
+# Homebrew's dotnet lives in libexec; global tool apphosts (e.g. easy-dotnet's server) need DOTNET_ROOT to find it
+export DOTNET_ROOT="/opt/homebrew/opt/dotnet/libexec"
+export PATH="$PATH:$HOME/.dotnet/tools"

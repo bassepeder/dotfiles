@@ -106,6 +106,22 @@ return {
       opts.sections.lualine_x = {
         "g:metals_status",
         "searchcount",
+        -- easy-dotnet: build/server progress, then startup project (idle/running/debugging);
+        -- both render empty outside .NET solutions. Click: run or stop, right-click: debug.
+        -- Checks package.loaded so the statusline never triggers loading the lazy plugin
+        {
+          function() return require("easy-dotnet").lualine.jobs() end,
+          cond = function() return package.loaded["easy-dotnet"] ~= nil end,
+        },
+        {
+          function() return require("easy-dotnet").lualine.run_status() end,
+          cond = function() return package.loaded["easy-dotnet"] ~= nil end,
+          -- lualine calls color once at setup, before any cond
+          color = function()
+            if package.loaded["easy-dotnet"] then return require("easy-dotnet").lualine.run_status_color() end
+          end,
+          on_click = function(...) require("easy-dotnet").lualine.run_status_click(...) end,
+        },
       }
     end,
   },
