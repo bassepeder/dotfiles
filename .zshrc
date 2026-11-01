@@ -92,7 +92,6 @@ generate-password() { strings /dev/urandom | grep -o '[[:alnum:]]' | head -n "$1
 where-from() { realpath "$(which "$1")" }
 url-sha256() { curl -sL "$1" | shasum -a 256 | cut -d ' ' -f 1 | xxd -r -p | base64 }
 c() { printf "%s\n" "$@" | bc -l }
-neovide() { command neovide --frame transparent "$@" }
 dl() { $HOME/dotfiles/yabai/scripts/dev-layout.sh }
 # btop can't follow the macOS appearance itself, so pick the theme at launch
 btop() { command btop --themes-dir ~/.config/btop/themes/$(defaults read -g AppleInterfaceStyle &>/dev/null && echo mocha || echo latte) "$@" }
