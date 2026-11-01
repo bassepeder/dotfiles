@@ -33,7 +33,7 @@ is_less() { awk -v a="$1" -v b="$2" 'BEGIN { exit !(a < b) }'; }
 neovide_id="$(yabai -m query --windows | jq -r '.[] | select(.app=="neovide") | .id' | head -n1)"
 if [ -z "$neovide_id" ]; then
   known_neovide="$(yabai -m query --windows | jq -r '.[] | select(.app=="neovide") | .id')"
-  neovide --frame transparent >/dev/null 2>&1 &
+  neovide >/dev/null 2>&1 &
   neovide_id="$(wait_for_new_window "neovide" "$known_neovide")"
 fi
 yabai -m window "$neovide_id" --space "$SPACE" 2>/dev/null || true
