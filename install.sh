@@ -15,9 +15,16 @@ EOF
 SKIP_PERMS=0
 for arg in "$@"; do
   case "$arg" in
-    --skip-perms) SKIP_PERMS=1 ;;
-    -h|--help)    usage; exit 0 ;;
-    *)            echo "Unknown argument: $arg" >&2; usage >&2; exit 1 ;;
+  --skip-perms) SKIP_PERMS=1 ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  *)
+    echo "Unknown argument: $arg" >&2
+    usage >&2
+    exit 1
+    ;;
   esac
 done
 
@@ -42,7 +49,7 @@ link() {
   ln -sfn "$1" "$2"
 }
 
-grep -qs 'brew shellenv' ~/.zprofile || echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+grep -qs 'brew shellenv' ~/.zprofile || echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >>~/.zprofile
 
 mkdir -p ~/.config "$HOME/Library/Application Support/lazygit"
 
@@ -75,15 +82,15 @@ fi
 
 # TCC grants are keyed to the resolved Cellar path, so `brew upgrade` silently revokes them
 
-tcc_granted() {  # $1=service  $2=resolved binary path
+tcc_granted() { # $1=service  $2=resolved binary path
   local v
   v="$(sqlite3 "$TCC_DB" \
-        "SELECT auth_value FROM access WHERE service='$1' AND client='$2' LIMIT 1;" \
-        2>/dev/null || true)"
+    "SELECT auth_value FROM access WHERE service='$1' AND client='$2' LIMIT 1;" \
+    2>/dev/null || true)"
   [ "$v" = "2" ]
 }
 
-report() {  # $1=label  $2=service  $3=binary
+report() { # $1=label  $2=service  $3=binary
   local bin
   bin="$(command -v "$3" 2>/dev/null || true)"
   if [ -z "$bin" ]; then
@@ -106,9 +113,9 @@ if [ "$SKIP_PERMS" -eq 0 ]; then
 
   missing=0
   if [ -r "$TCC_DB" ]; then
-    report "yabai  · Accessibility"    kTCCServiceAccessibility yabai || missing=1
-    report "skhd   · Accessibility"    kTCCServiceAccessibility skhd  || missing=1
-    report "skhd   · Input Monitoring" kTCCServiceListenEvent   skhd  || missing=1
+    report "yabai  · Accessibility" kTCCServiceAccessibility yabai || missing=1
+    report "skhd   · Accessibility" kTCCServiceAccessibility skhd || missing=1
+    report "skhd   · Input Monitoring" kTCCServiceListenEvent skhd || missing=1
   else
     echo "  (cannot read $TCC_DB — check the panes manually)"
     missing=1

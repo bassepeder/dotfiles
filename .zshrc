@@ -94,7 +94,26 @@ url-sha256() { curl -sL "$1" | shasum -a 256 | cut -d ' ' -f 1 | xxd -r -p | bas
 c() { printf "%s\n" "$@" | bc -l }
 dl() { $HOME/dotfiles/yabai/scripts/dev-layout.sh }
 # btop can't follow the macOS appearance itself, so pick the theme at launch
-btop() { command btop --themes-dir ~/.config/btop/themes/$(defaults read -g AppleInterfaceStyle &>/dev/null && echo mocha || echo latte) "$@" }
+#btop() { command btop --themes-dir ~/.config/btop/themes/$(defaults read -g AppleInterfaceStyle &>/dev/null && echo mocha || echo latte) "$@" }
+
+btop () {
+    local width=$(tput cols)
+    local height=$(tput lines)
+
+    local config="$HOME/.config/btop/btop.conf"
+
+    if (( width < 80 || height < 24 )); then
+        config="$HOME/.config/btop/btop-small.conf"
+    fi
+
+    local theme
+    theme=$(defaults read -g AppleInterfaceStyle &>/dev/null && echo mocha || echo latte)
+
+    command /opt/homebrew/bin/btop \
+        --config "$config" \
+        --themes-dir "$HOME/.config/btop/themes/$theme" \
+        "$@"
+}
 
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="/opt/homebrew/opt/rustup/bin:$PATH"
