@@ -1,4 +1,5 @@
 frame = "none"
+tabs = false
 
 # Neovide 0.17+ briefly claims ext_messages/ext_cmdline during startup,
 # which makes noice.nvim disable itself. Let noice own the cmdline instead.
