@@ -11,6 +11,8 @@ return {
       -- the command, not require("easy-dotnet").debug_default(): that one launches without the profile's env vars
       { "<leader>dd", "<cmd>Dotnet debug profile default<cr>", desc = "Debug .NET project" },
       { "<leader>dT", "<cmd>Dotnet testrunner<cr>", desc = "Toggle .NET test runner" },
+      -- errors/warnings go to the quickfix list; ]q / [q to walk them
+      { "<leader>cb", "<cmd>Dotnet build solution quickfix<cr>", desc = "Build .NET solution" },
       {
         "<leader>dL",
         function()
