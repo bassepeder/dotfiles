@@ -134,6 +134,10 @@ return {
             },
           },
         },
+        clangd = {
+          mason = false,
+          cmd = { "/opt/homebrew/opt/llvm/bin/clangd" },
+        },
         -- CSS/HTML/Tailwind/Emmet for .vue <style>/<template> blocks and standalone files
         cssls = {},
         html = {},
