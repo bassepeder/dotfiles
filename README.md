@@ -55,22 +55,26 @@ The prompt is just the directory, with the exit code in front when something fai
 
 ### nvim-c
 
-The keys are the ones from my main config where there's an equivalent. `,` is the leader, and `?` shows all of this inside Neovim.
+The keys are the ones from my main config where there's an equivalent, LSP keys included. `,` is the leader, and `?` shows all of this inside Neovim.
 
 | Key | |
 |---|---|
 | `,ff` `,fg` `,fb` | find files, grep, open buffers |
 | `Space e` | file explorer (netrw as a sidebar, `q` closes it) |
-| `Space Space` | list the problems, errors first |
+| `Space Space` | list the problems, errors first (`Space i` all of them, `Space d` shows or hides the list) |
 | `]d` `[d` | next/previous problem, with its message. `Ctrl-w d` shows it again |
-| `K` | man page, libc first |
 | `gd` `ge` | definition (`Ctrl-o` goes back) |
+| `gr` `gn` | references |
 | `gD` `gE` | declaration |
 | `gI` | implementation |
 | `gy` | type definition |
-| `gn` `grr` | references |
-| `grn` | rename |
-| `gK` `gh` | hover |
+| `K` `gh` | hover |
+| `gK` | signature help (`Ctrl-k` while typing) |
+| `]]` `[[` | next/previous use of the word under the cursor |
+| `M` | man page for the word, system calls (2) and the C library (3) first |
+| `,cr` | rename |
+| `,ca` `,cA` | code action / source action |
+| `,ss` `Space o` | symbols in the file (`,sS` / `Space O` in the project) |
 | `Ctrl-x Ctrl-o` | completion, which never pops up by itself |
 
 Problems, build errors and references end up in the quickfix list. There `Tab`/`Shift-Tab` step through the entries while the code follows, `Enter` jumps to one and closes the list, and `q` or `Esc` closes it. `,qf` brings it back. `Tab`/`Shift-Tab` also move through the results in the finders.
