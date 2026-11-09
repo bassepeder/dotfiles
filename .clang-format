@@ -4,6 +4,8 @@ BasedOnStyle: LLVM
 # everything else (if, for, struct, ...) on the same line
 BreakBeforeBraces: Linux
 AllowShortFunctionsOnASingleLine: None
+# case labels one step in from their switch
+IndentCaseLabels: true
 
 AlignConsecutiveDeclarations:
   Enabled: true
