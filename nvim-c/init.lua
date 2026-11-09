@@ -26,7 +26,7 @@ o.softtabstop = -1 -- follow shiftwidth
 o.tabstop = 8 -- how wide a real tab shows
 o.list = true -- make tabs and trailing spaces visible, so a mix stands out
 o.listchars = { tab = "» ", trail = "·", nbsp = "+" }
-o.cinoptions = ":0,l1,t0" -- case labels at the switch, return type on its own
+o.cinoptions = "l1,t0" -- case labels one step in from the switch, like .clang-format
 o.mouse = ""
 o.clipboard = "unnamedplus"
 o.undofile = true
