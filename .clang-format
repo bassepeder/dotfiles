@@ -1,7 +1,14 @@
 BasedOnStyle: LLVM
 
+# K&R / Linux kernel: a function's opening brace on its own line,
+# everything else (if, for, struct, ...) on the same line
+BreakBeforeBraces: Linux
+AllowShortFunctionsOnASingleLine: None
+
 AlignConsecutiveDeclarations:
   Enabled: true
+  # line up variables, not function names
+  AlignFunctionDeclarations: false
 
 AlignConsecutiveAssignments:
   Enabled: true
