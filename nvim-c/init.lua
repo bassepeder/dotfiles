@@ -316,6 +316,27 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
+-- In the quickfix/location list, Tab and Shift-Tab step to the next/previous
+-- entry and show it in the code window, keeping the cursor in the list.
+-- They wrap around at the ends.
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "qf",
+  callback = function(args)
+    local loclist = vim.fn.getwininfo(vim.api.nvim_get_current_win())[1].loclist == 1
+    local function step(next, wrap)
+      local p = loclist and "l" or "c"
+      return function()
+        if not pcall(vim.cmd, p .. next) then
+          pcall(vim.cmd, p .. wrap)
+        end
+        vim.cmd("wincmd p")
+      end
+    end
+    vim.keymap.set("n", "<Tab>", step("next", "first"), { buffer = args.buf, desc = "next entry" })
+    vim.keymap.set("n", "<S-Tab>", step("prev", "last"), { buffer = args.buf, desc = "previous entry" })
+  end,
+})
+
 -- hex view: the classic xxd round trip
 vim.api.nvim_create_user_command("Hex", function()
   if vim.b.hex then
@@ -385,6 +406,7 @@ local cheatsheet = {
   " BUILD AND RUN",
   "   Space m     build (make, or make <file>); problems open a list",
   "   ]q  [q      next / previous entry in that list",
+  "   Tab S-Tab   in the list: step through entries, shown in the code",
   "   Space r     run ./<file> in a terminal        (:Run [cmd])",
   "   Space d     debug ./<file> with lldb          (:Debug [prog])",
   "   Space a     the file's assembly, side by side  (:Asm)",
@@ -406,7 +428,7 @@ local cheatsheet = {
   " TYPING",
   "   Ctrl-x Ctrl-o   completion; Ctrl-n / Ctrl-p to move",
   "",
-  " FINDING (fzf: type to filter, Enter opens, Esc cancels)",
+  " FINDING (fzf: type to filter, Tab / S-Tab to move, Enter opens, Esc cancels)",
   "   Space Space  files     (or Space f)",
   "   Space /      grep the project as you type",
   "   Space ,      open buffers   (or Space b)",
@@ -473,7 +495,10 @@ local function fzf(title, run, fzf_args, picked)
   })
   -- a single Esc goes straight to fzf (which cancels), not to the <esc><esc> map
   vim.keymap.set("t", "<esc>", "<esc>", { buffer = buf, nowait = true })
-  vim.fn.jobstart(run .. " | fzf " .. fzf_args .. " > " .. vim.fn.shellescape(out), {
+  -- input on top, results below it, and Tab / Shift-Tab to move through them
+  -- (wrapping around), like Tab in the quickfix list
+  local keys = "--layout=reverse --cycle --bind 'tab:down,shift-tab:up' "
+  vim.fn.jobstart(run .. " | fzf " .. keys .. fzf_args .. " > " .. vim.fn.shellescape(out), {
     term = true,
     on_exit = function(_, code)
       vim.schedule(function()
