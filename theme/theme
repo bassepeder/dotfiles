@@ -133,10 +133,21 @@ apply() {
 	features = $dark
 GIT
 
-  printf -- '--theme-light="%s"\n--theme-dark="%s"\n' "$(bat_name "$light")" "$(bat_name "$dark")" \
-    >"$DOTFILES/bat/config"
-  if command -v bat >/dev/null && ! bat --list-themes 2>/dev/null | grep -qx modus-operandi; then
-    bat cache --build >/dev/null
+  # bat asks the terminal whether it's light or dark; where it can't (fzf
+  # previews, pipes) auto:system falls back to the macOS appearance instead of
+  # bat's built-in Monokai
+  printf -- '--theme=auto:system\n--theme-light="%s"\n--theme-dark="%s"\n' \
+    "$(bat_name "$light")" "$(bat_name "$dark")" >"$DOTFILES/bat/config"
+  # rebuild bat's theme cache when a theme in bat/themes isn't in it yet
+  if command -v bat >/dev/null; then
+    local cached
+    cached="$(bat --list-themes --color=never 2>/dev/null)"
+    for t in "$DOTFILES"/bat/themes/*.tmTheme; do
+      if ! grep -qx "$(basename "$t" .tmTheme)" <<<"$cached"; then
+        bat cache --build >/dev/null
+        break
+      fi
+    done
   fi
 
   reload_kitty
