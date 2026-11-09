@@ -47,6 +47,8 @@ cmode --no-crt       # Ghostty without the CRT effect
 
 Ghostty is the default. It runs the screen through `ghostty-cmode/crt.glsl`, which is my cool-retro-term profile (`cool_retro_term.json`) redone as a shader. `--no-crt` turns the effect off, and `--kitty` is the same thing in kitty. Both use Modus Vivendi, the deuteranopia variant, on black.
 
+Panes work as in my kitty: `Cmd-D` / `Cmd-Shift-D` split (in kitty `Cmd-Enter`), and `Cmd-h/j/k/l` move between them. A new pane is a cmode shell too, handy for running a server next to the editor.
+
 The font starts out as whatever `theme font` is. `:Font` in nvim-c, or `cmode font <id>` in the shell, changes it for that window only.
 
 The prompt is just the directory, with the exit code in front when something fails (`[134] ~/src/kilo $`). `CFLAGS` is `-std=c99 -Wall -Wextra -Wpedantic -g -O0 -fsanitize=address,undefined`, so `make foo` builds `foo.c` without a Makefile. In projects with a Makefile, run `bear -- make` once so clangd sees the real flags.
