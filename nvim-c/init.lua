@@ -11,7 +11,7 @@
 --   K           man page (section 3 first, so libc)
 --   gd ge       definition;  gD gE declaration;  gI implementation;  gy type definition
 --   gn grr      references;  grn rename;  gK gh hover   (the main config's keys)
---   ]d [d       next/previous diagnostic;  <C-w>d  show it
+--   ]d [d       next/previous diagnostic, with its message;  <C-w>d  show it again
 --   <leader><space> <leader>f   fuzzy-find files (fzf);  <leader>/  grep
 --   <leader>, <leader>b         open buffers;  -  file browser
 --   ?           this list as a cheat sheet in a popup   (:Keys)
@@ -173,6 +173,39 @@ vim.diagnostic.config({
   severity_sort = true,
   signs = { text = { "E", "W", "I", "H" } },
   float = { border = "single", source = true },
+  -- ]d / [d show the message once they land, so Ctrl-w d is rarely needed
+  jump = {
+    on_jump = function(diagnostic, bufnr)
+      if not diagnostic then
+        return
+      end
+      -- The jump's own CursorMoved would close a normal popup straight away,
+      -- so leave CursorMoved out and close it once the cursor really moves on
+      local _, win = vim.diagnostic.open_float({
+        bufnr = bufnr,
+        scope = "cursor",
+        focus = false,
+        close_events = { "InsertEnter", "BufLeave", "WinLeave" },
+      })
+      if not win then
+        return
+      end
+      local landed = vim.api.nvim_win_get_cursor(0)
+      vim.api.nvim_create_autocmd("CursorMoved", {
+        buffer = bufnr,
+        callback = function()
+          if not vim.api.nvim_win_is_valid(win) then
+            return true -- already closed; drop this autocmd
+          end
+          local now = vim.api.nvim_win_get_cursor(0)
+          if now[1] ~= landed[1] or now[2] ~= landed[2] then
+            vim.api.nvim_win_close(win, true)
+            return true
+          end
+        end,
+      })
+    end,
+  },
 })
 
 -- clangd for definitions, references and diagnostics. Completion only when
@@ -404,38 +437,47 @@ local cheatsheet = {
   " Space is the leader: press Space, then the key.",
   "",
   " BUILD AND RUN",
-  "   Space m     build (make, or make <file>); problems open a list",
-  "   ]q  [q      next / previous entry in that list",
-  "   Tab S-Tab   in the list: step through entries, shown in the code",
-  "   Space r     run ./<file> in a terminal        (:Run [cmd])",
-  "   Space d     debug ./<file> with lldb          (:Debug [prog])",
-  "   Space a     the file's assembly, side by side  (:Asm)",
-  "   Esc Esc     leave a terminal split; :q closes it",
-  "   q           close the quickfix list, a man page or the asm view",
+  "   Space m         build (make, or make <file>)",
+  "   Space r         run ./<file> in a terminal     (:Run [cmd])",
+  "   Space d         debug ./<file> with lldb       (:Debug [prog])",
+  "   Space a         the file's assembly beside it  (:Asm)",
+  "   Esc Esc         leave a terminal split (:q closes it)",
+  "",
+  " LISTS (build errors, references)",
+  "   Tab / S-Tab     next / previous entry, shown in the code",
+  "   ]q / [q         the same, from anywhere",
+  "   Enter           jump to the entry",
+  "   q               close the list (also man pages and :Asm)",
   "",
   " READING CODE",
-  "   K           man page for the word (libc first)",
-  "   gK  gh      clangd: type, signature, docs",
-  "   gd  ge      go to the definition    Ctrl-o  jump back",
-  "   gD  gE      declaration             gI      implementation",
-  "   gy          type definition         gn grr  list its uses",
-  "   grn         rename it everywhere",
+  "   K               man page for the word (libc first)",
+  "   gh or gK        clangd: type, signature, docs",
+  "   gd or ge        go to the definition",
+  "   Ctrl-o          jump back",
+  "   gD or gE        go to the declaration",
+  "   gI              go to the implementation",
+  "   gy              go to the type definition",
+  "   gn or grr       list everywhere it's used",
+  "   grn             rename it everywhere",
   "",
-  " PROBLEMS",
-  "   ]d  [d      next / previous error or warning",
-  "   Ctrl-w d    show the message under the cursor",
+  " PROBLEMS (the E and W in the margin)",
+  "   ]d              next error or warning, and its message",
+  "   [d              previous one, and its message",
+  "   Ctrl-w d        show the message again",
   "",
   " TYPING",
-  "   Ctrl-x Ctrl-o   completion; Ctrl-n / Ctrl-p to move",
+  "   Ctrl-x Ctrl-o   complete the word",
+  "   Ctrl-n / Ctrl-p move through the suggestions",
   "",
-  " FINDING (fzf: type to filter, Tab / S-Tab to move, Enter opens, Esc cancels)",
-  "   Space Space  files     (or Space f)",
-  "   Space /      grep the project as you type",
-  "   Space ,      open buffers   (or Space b)",
-  "   -            file browser (Enter opens, - goes up)",
+  " FINDING (Tab / S-Tab move, Enter opens, Esc cancels)",
+  "   Space Space     files (also Space f)",
+  "   Space /         grep the project as you type",
+  "   Space ,         open buffers (also Space b)",
+  "   -               file browser (Enter opens, - goes up)",
   "",
   " COMMANDS",
-  "   :Font [id]  this window's font      :Hex  hex view",
+  "   :Font [id]      this window's font",
+  "   :Hex            hex view",
   "",
   " q, Esc or ? closes this. Search backwards with / and then N.",
   "",

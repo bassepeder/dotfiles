@@ -69,7 +69,7 @@ Leader is Space. `?` shows these inside Neovim.
 | `gn` `grr` | references |
 | `grn` | rename |
 | `gK` `gh` | hover |
-| `]d` `[d` | next/previous diagnostic, `Ctrl-w d` shows it |
+| `]d` `[d` | next/previous error or warning, with its message in a popup. `Ctrl-w d` shows it again |
 | `Ctrl-x Ctrl-o` | completion, which never pops up by itself |
 | `Space Space` `Space f` | find files |
 | `Space /` | grep the project |
