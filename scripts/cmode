@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# Open a stripped-down console for writing C: Terminus on black, a bare zsh
-# prompt, plain BSD tools, strict C99 builds and a plugin-free Neovim (nvim-c).
+# Open a stripped-down console for writing C: the Commodore 64 font on Modus
+# Vivendi black, a bare zsh prompt, plain BSD tools, strict C99 builds and a
+# plugin-free Neovim (nvim-c).
 #
-#   cmode [--c64] [dir]     dir defaults to the current one
+#   cmode [--terminus] [dir]     dir defaults to the current one
 set -euo pipefail
 
 font=()
-if [ "${1:-}" = "--c64" ]; then
-  font=(-o "font_family=family='C64 Pro Mono'" -o "font_size=12"
-    -o "symbol_map=U+E000-U+F8FF Symbols Nerd Font Mono" -o "modify_font=cell_height 125%")
+if [ "${1:-}" = "--terminus" ]; then
+  font=(-o "font_family=family='Terminess Nerd Font Mono'" -o "font_size=15"
+    -o "modify_font=cell_height 100%")
   shift
 fi
 dir="$(cd "${1:-.}" && pwd)"
