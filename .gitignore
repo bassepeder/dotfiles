@@ -1,2 +1,8 @@
 .DS_Store
 nvim/.colorscheme
+theme/state
+theme/delta.gitconfig
+kitty/light-theme.auto.conf
+kitty/dark-theme.auto.conf
+bat/config
+kitty/font.conf

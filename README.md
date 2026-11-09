@@ -2,7 +2,18 @@
 
 My macOS setup. yabai and skhd for tiling, JankyBorders, Neovim (LazyVim), kitty, zsh with starship, lazygit, delta and btop.
 
-Everything uses Catppuccin. Kitty, Neovim, delta, lazygit, bat and btop follow the macOS appearance, Latte when it's light and Mocha when it's dark.
+Kitty, Neovim, delta, lazygit, bat and btop share one theme: Catppuccin (Latte/Mocha) or Modus (Operandi/Vivendi). It either follows the macOS appearance or stays light or dark. Kitty and Neovide also share one font: JetBrains Mono, Fira Code, Terminus or Commodore 64 (C64 Pro Mono).
+
+Switch them from Neovim with `:Theme` and `:Font`, which open pickers, or from a shell:
+
+```bash
+theme set modus          # follow the system
+theme set catppuccin dark
+theme font c64
+theme                    # show the current setting
+```
+
+`theme/theme` keeps the state in `theme/state` and writes the per-tool files (`kitty/*.auto.conf`, `kitty/font.conf`, `bat/config`, `theme/delta.gitconfig`). All of them are gitignored and `install.sh` generates them. Running shells keep the old bat theme until they restart, because bat reads `~/.config/bat/config` and env vars override it.
 
 ## Install
 

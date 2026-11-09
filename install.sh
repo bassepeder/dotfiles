@@ -65,7 +65,29 @@ link "$DOTFILES/git/.gitconfig" ~/.gitconfig
 link "$DOTFILES/starship.toml" ~/.config/starship.toml
 link "$DOTFILES/kitty" ~/.config/kitty
 link "$DOTFILES/btop" ~/.config/btop
+link "$DOTFILES/bat" ~/.config/bat
+link "$DOTFILES/theme" ~/.config/theme
+mkdir -p ~/.local/bin
+link "$DOTFILES/theme/theme" ~/.local/bin/theme
 link "$DOTFILES/lazygit/config.yml" "$HOME/Library/Application Support/lazygit/config.yml"
+
+# C64 Pro Mono (for `theme font c64`) may not be redistributed, so it isn't in
+# this repo or Homebrew; fetch it from the publisher when it's missing
+if ! ls ~/Library/Fonts/C64_Pro_Mono-STYLE.ttf >/dev/null 2>&1; then
+  tmp="$(mktemp -d)"
+  if curl -fsSL -o "$tmp/c64.zip" https://style64.org/file/C64_TrueType_v1.2.1-STYLE.zip &&
+    unzip -q -j "$tmp/c64.zip" 'C64_TrueType_v1.2.1-STYLE/fonts/C64_Pro_Mono-STYLE.ttf' -d "$tmp"; then
+    mkdir -p ~/Library/Fonts
+    cp "$tmp/C64_Pro_Mono-STYLE.ttf" ~/Library/Fonts/
+    echo "Installed C64 Pro Mono"
+  else
+    echo "⚠️  could not download C64 Pro Mono from style64.org"
+  fi
+  rm -rf "$tmp"
+fi
+
+# writes the generated kitty/bat/delta theme and font files (gitignored)
+"$DOTFILES/theme/theme" apply
 
 echo
 if command -v yabai >/dev/null 2>&1; then

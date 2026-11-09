@@ -24,13 +24,11 @@ vim.opt.splitkeep = "screen"
 vim.g.deprecation_warnings = true
 vim.g.snacks_animate = false
 
--- Seed `background` from the real macOS appearance before lazy.nvim loads, so
--- catppuccin's `flavour = "auto"` (plugins/ui.lua) resolves correctly on the
--- first `colorscheme` call instead of Neovim's "dark" default.
-if vim.uv.os_uname().sysname == "Darwin" then
-  local ok, result = pcall(vim.fn.system, { "defaults", "read", "-g", "AppleInterfaceStyle" })
-  vim.opt.background = (ok and result:match("^Dark")) and "dark" or "light"
-end
+-- Seed `background` (macOS appearance, or the fixed mode picked with :Theme)
+-- before lazy.nvim loads, so catppuccin's `flavour = "auto"` / modus's
+-- `style = "auto"` resolve correctly on the first `colorscheme` call instead of
+-- Neovim's "dark" default.
+vim.opt.background = require("config.theme").background()
 
 if vim.g.neovide then
   require("config.neovide")

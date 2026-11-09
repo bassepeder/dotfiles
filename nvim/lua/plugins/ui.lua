@@ -1,18 +1,19 @@
 return {
   {
     -- background is pre-seeded in config/options.lua; this plugin only needs
-    -- to catch appearance changes during the session, so skip redundant reapplies.
+    -- to catch appearance changes during the session, so skip redundant reapplies,
+    -- and ignore them entirely when :Theme pinned light or dark.
     "f-person/auto-dark-mode.nvim",
     lazy = false,
     opts = {
       set_dark_mode = function()
-        if vim.o.background ~= "dark" then
+        if require("config.theme").follows_system() and vim.o.background ~= "dark" then
           vim.o.background = "dark"
           vim.cmd.colorscheme(LazyVim.config.colorscheme)
         end
       end,
       set_light_mode = function()
-        if vim.o.background ~= "light" then
+        if require("config.theme").follows_system() and vim.o.background ~= "light" then
           vim.o.background = "light"
           vim.cmd.colorscheme(LazyVim.config.colorscheme)
         end
@@ -33,6 +34,12 @@ return {
         transparent = false, -- enable transparent floating windows
       },
     },
+  },
+  {
+    -- :Theme; style "auto" picks operandi/vivendi from `background`
+    "miikanissi/modus-themes.nvim",
+    lazy = true,
+    opts = { style = "auto" },
   },
   {
     "folke/tokyonight.nvim",

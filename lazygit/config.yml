@@ -17,7 +17,7 @@ refresher:
 git:
   overrideGpg: true
   diffRenderers:
-    - command: delta --paging=never --features catppuccin-{{if eq .colorScheme "light"}}latte{{else}}mocha{{end}}
+    - command: delta --paging=never --features theme-{{if eq .colorScheme "light"}}light{{else}}dark{{end}}
     - type: rawGit
       args: ["--color=always"]
 os:
