@@ -2,12 +2,13 @@
 # Open a stripped-down console for writing C: Modus Vivendi black, a bare zsh
 # prompt, plain BSD tools, strict C99 builds and a plugin-free Neovim (nvim-c).
 #
-#   cmode [--ghostty | --kitty] [--c64] [dir]
+#   cmode [--ghostty | --kitty] [--no-crt] [--c64] [dir]
 #   cmode font [id]       inside a cmode window: switch its font, or show it
 #
 #   --ghostty    Ghostty with a CRT pass recreating the cool-retro-term
 #                profile in cool_retro_term.json (default)
 #   --kitty      kitty, plain and sharp
+#   --no-crt     Ghostty without the CRT pass (--crt turns it back on)
 #   --c64        the Commodore 64 font instead of your usual one (`theme font`)
 #   dir          where to start; defaults to the current directory
 #
@@ -18,7 +19,7 @@ set -euo pipefail
 DOTFILES="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 THEME="$DOTFILES/theme/theme"
 
-usage() { sed -n '5,15p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '5,16p' "$0" | sed 's/^# \{0,1\}//'; }
 die() {
   echo "cmode: $*" >&2
   exit 1
@@ -51,11 +52,12 @@ font_cmd() {
   case "$CMODE_TERM" in
   kitty) kill -USR1 "$KITTY_PID" ;; # each cmode window is its own kitty
   ghostty)
-    # each cmode window is its own Ghostty too; reload just that one
+    # each cmode window is its own Ghostty too; SIGUSR2 makes just that one
+    # reload its config. (AppleScript can't do this: whatever PID it's given,
+    # it talks to the first Ghostty that was started.)
     local pid
     pid="$(own_ghostty)" || die "can't find this window's Ghostty"
-    osascript -l JavaScript -e "const a = Application($pid);
-      a.performAction('reload_config', { on: a.frontWindow().selectedTab().focusedTerminal() })" >/dev/null
+    kill -USR2 "$pid"
     ;;
   esac
 }
@@ -66,12 +68,15 @@ if [ "${1:-}" = font ]; then
 fi
 
 term=ghostty
+crt=1
 font="$("$THEME" font)"
 while [ $# -gt 0 ]; do
   case "$1" in
   --ghostty) term=ghostty ;;
   --kitty) term=kitty ;;
   --c64) font=c64 ;;
+  --crt) crt=1 ;;
+  --no-crt) crt=0 ;;
   -h | --help)
     usage
     exit 0
@@ -98,6 +103,8 @@ ghostty)
   # go in files loaded after the main one
   session="$(mktemp "$state/session.XXXXXX")"
   echo "command = /usr/bin/env CMODE=1 CMODE_TERM=ghostty CMODE_FONT_FILE=$font_file /bin/zsh -l" >"$session"
+  # custom-shader is a list; an empty value clears the CRT pass
+  [ "$crt" = 1 ] || echo "custom-shader =" >>"$session"
   # -n: a separate Ghostty instance, so its config doesn't touch other windows
   open -na Ghostty --args --config-default-files=false \
     --config-file="$HOME/.config/ghostty-cmode/config" \

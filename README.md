@@ -42,9 +42,10 @@ cmode                # Ghostty, in the current directory
 cmode ~/src/kilo     # somewhere else
 cmode --kitty        # kitty instead of Ghostty
 cmode --c64          # Commodore 64 font
+cmode --no-crt       # Ghostty without the CRT effect
 ```
 
-Ghostty is the default. It runs the screen through `ghostty-cmode/crt.glsl`, which is my cool-retro-term profile (`cool_retro_term.json`) redone as a shader. `--kitty` is the same thing without the CRT effect. Both use Modus Vivendi, the deuteranopia variant, on black.
+Ghostty is the default. It runs the screen through `ghostty-cmode/crt.glsl`, which is my cool-retro-term profile (`cool_retro_term.json`) redone as a shader. `--no-crt` turns the effect off, and `--kitty` is the same thing in kitty. Both use Modus Vivendi, the deuteranopia variant, on black.
 
 The font starts out as whatever `theme font` is. `:Font` in nvim-c, or `cmode font <id>` in the shell, changes it for that window only.
 
@@ -52,15 +53,14 @@ The prompt is just the directory, with the exit code in front when something fai
 
 ### nvim-c
 
-Leader is Space. `?` shows these inside Neovim.
+The keys are the ones from my main config where there's an equivalent. `,` is the leader, and `?` shows all of this inside Neovim.
 
 | Key | |
 |---|---|
-| `Space m` | build: `make`, or `make <file>` when there's no Makefile. Problems go to the quickfix list (`]q` `[q`) |
-| `Tab` `Shift-Tab` | in the quickfix list (build errors, references): step through the entries while the code window follows. In the finders: move through the results |
-| `Space r` | run it in a terminal split: `make run` if the Makefile has that target, else `./<file>` |
-| `Space d` | debug it in lldb |
-| `Space a` | the file's `-O2` assembly next to it |
+| `,ff` `,fg` `,fb` | find files, grep, open buffers |
+| `Space e` | file explorer (netrw as a sidebar, `q` closes it) |
+| `Space Space` | list the problems, errors first |
+| `]d` `[d` | next/previous problem, with its message. `Ctrl-w d` shows it again |
 | `K` | man page, libc first |
 | `gd` `ge` | definition (`Ctrl-o` goes back) |
 | `gD` `gE` | declaration |
@@ -69,16 +69,18 @@ Leader is Space. `?` shows these inside Neovim.
 | `gn` `grr` | references |
 | `grn` | rename |
 | `gK` `gh` | hover |
-| `]d` `[d` | next/previous error or warning, with its message in a popup. `Ctrl-w d` shows it again |
 | `Ctrl-x Ctrl-o` | completion, which never pops up by itself |
-| `Space Space` `Space f` | find files |
-| `Space /` | grep the project |
-| `Space ,` `Space b` | open buffers |
-| `-` | file browser |
-| `Esc Esc` | leave a terminal split |
-| `Enter` | in the quickfix list: jump to the entry and close the list |
-| `q` | close the quickfix list (also `Esc`), a man or help page, or the assembly view |
-| `Space q` | show the quickfix list again, or close it, from any window |
+
+Problems, build errors and references end up in the quickfix list. There `Tab`/`Shift-Tab` step through the entries while the code follows, `Enter` jumps to one and closes the list, and `q` or `Esc` closes it. `,qf` brings it back. `Tab`/`Shift-Tab` also move through the results in the finders.
+
+Building and running are commands rather than keys:
+
+| Command | |
+|---|---|
+| `:make` | build, with the Makefile if there is one, else `make <file>`. It saves first and opens the list if there are problems |
+| `:Run` | `make run` if the Makefile has that target, else `./<file>`, in a split. `q` closes it and stops the program |
+| `:Debug` | lldb on `./<file>` in a split |
+| `:Asm` | the file's `-O2` assembly next to it |
 | `:Hex` | hex view (open binaries with `nvim -b`) |
 | `:Font` | this window's font |
 
