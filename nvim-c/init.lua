@@ -27,7 +27,6 @@ o.tabstop = 8 -- how wide a real tab shows
 o.list = true -- make tabs and trailing spaces visible, so a mix stands out
 o.listchars = { tab = "» ", trail = "·", nbsp = "+" }
 o.cinoptions = ":0,l1,t0" -- case labels at the switch, return type on its own
-o.colorcolumn = "80"
 o.mouse = ""
 o.clipboard = "unnamedplus"
 o.undofile = true
@@ -50,6 +49,20 @@ require("modus-themes").setup({
   styles = { comments = { italic = false }, keywords = { italic = false } },
 })
 vim.cmd.colorscheme("modus_vivendi")
+
+-- The 80-column limit: no guide line, just the characters past column 80
+-- highlighted, in windows showing a file
+vim.api.nvim_create_autocmd({ "BufWinEnter", "WinNew" }, {
+  callback = function()
+    local wanted = vim.bo.buftype == ""
+    if wanted and not vim.w.over80 then
+      vim.w.over80 = vim.fn.matchadd("ColorColumn", [[\%>80v.\+]])
+    elseif not wanted and vim.w.over80 then
+      pcall(vim.fn.matchdelete, vim.w.over80)
+      vim.w.over80 = nil
+    end
+  end,
+})
 
 -- Keep whatever indentation a file already uses: tabs stay tabs, and space
 -- indentation keeps its width (the largest of 8/4/2 that ~90% of the indented
