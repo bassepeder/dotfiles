@@ -88,7 +88,7 @@ Building and running are commands rather than keys:
 
 The g-keys are the same ones as in my main Neovim config. The finders are fzf in a floating terminal, so the colour theme is the only plugin.
 
-Indentation follows the file or its `.editorconfig`, and new files get 2 spaces. Anything past column 80 is highlighted. The statusline is an Emacs mode line, `-UU-:**-  F1  bf.c  62% L218  (C E1 W2)`: `**` is modified (`%%` read-only), then the tab number, file, position, line, and the filetype with clangd's error and warning counts.
+`:w` formats C with clang-format (built into clangd), using the nearest `.clang-format`, so `~/.clang-format` unless the project has its own. While typing, indentation follows the file or its `.editorconfig`, and new files get 2 spaces. Anything past column 80 is highlighted. The statusline is an Emacs mode line, `-UU-:**-  F1  bf.c  62% L218  (C E1 W2)`: `**` is modified (`%%` read-only), then the tab number, file, position, line, and the filetype with clangd's error and warning counts.
 
 </details>
 

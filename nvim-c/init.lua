@@ -223,6 +223,17 @@ vim.api.nvim_create_autocmd("LspAttach", {
   end,
 })
 
+-- :w formats C with clang-format, built into clangd. It uses the nearest
+-- .clang-format above the file: the project's, or else ~/.clang-format.
+vim.api.nvim_create_autocmd("BufWritePre", {
+  pattern = { "*.c", "*.h" },
+  callback = function(args)
+    if #vim.lsp.get_clients({ bufnr = args.buf, name = "clangd" }) > 0 then
+      vim.lsp.buf.format({ bufnr = args.buf, name = "clangd", timeout_ms = 2000 })
+    end
+  end,
+})
+
 local map = vim.keymap.set
 
 -- K: man pages, libc (section 3) first
@@ -513,6 +524,7 @@ local cheatsheet = {
   "   ]q / [q         next / previous entry from anywhere",
   "",
   " COMMANDS",
+  "   :w              save, formatted with clang-format (~/.clang-format)",
   "   :make           build (make, or make <file>); problems open a list",
   "   :Run [cmd]      make run, or ./<file>, in a split (q closes)",
   "   :Debug [prog]   lldb on ./<file> in a split",
@@ -671,6 +683,7 @@ local function explorer()
     return -- the file is outside the tree
   end
   vim.wo.cursorline = true
+  vim.fn.cursor(1, 1) -- the tree reopens where it was left; search from the top
   local parts = vim.split(file:sub(#cwd + 2), "/", { plain = true })
   for depth, part in ipairs(parts) do
     -- tree lines are "| " per level, then the name ("dir/", "exe*")
@@ -678,8 +691,11 @@ local function explorer()
     if vim.fn.search("\\V\\^" .. ("| "):rep(depth) .. name .. "\\(*\\)\\=\\$", "W") == 0 then
       return
     end
-    if depth < #parts then
-      vim.cmd.normal(vim.keycode("<CR>")) -- netrw's own key: open the folder
+    -- open the folder with netrw's own key, unless it's open already (the
+    -- tree remembers, and Enter on an open folder would close it)
+    local child = ("| "):rep(depth + 1)
+    if depth < #parts and vim.fn.getline(vim.fn.line(".") + 1):sub(1, #child) ~= child then
+      vim.cmd.normal(vim.keycode("<CR>"))
     end
   end
 end
