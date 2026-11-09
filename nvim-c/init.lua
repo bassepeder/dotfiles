@@ -15,6 +15,7 @@
 --   <leader><space> <leader>f   fuzzy-find files (fzf);  <leader>/  grep
 --   <leader>, <leader>b         open buffers;  -  file browser
 --   ?           this list as a cheat sheet in a popup   (:Keys)
+--   q           close the quickfix list, man/help pages and the :Asm view
 
 vim.g.mapleader = " "
 vim.g.c_syntax_for_h = 1 -- .h is C, not C++
@@ -287,6 +288,7 @@ vim.api.nvim_create_user_command("Asm", function()
     buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_buf_set_name(buf, name)
     vim.bo[buf].filetype = "asm"
+    vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = buf, nowait = true, desc = "close" })
   end
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   if vim.fn.bufwinid(buf) == -1 then
@@ -299,6 +301,20 @@ vim.api.nvim_create_user_command("Asm", function()
   end
 end, {})
 map("n", "<leader>a", "<cmd>Asm<cr>", { desc = "assembly" })
+
+-- q closes the panes that pop up (the quickfix list, man and help pages),
+-- like in the main config. The :Asm view sets its own above.
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "qf", "man", "help" },
+  callback = function(args)
+    vim.keymap.set("n", "q", function()
+      -- the last window can't be closed; then just drop the buffer
+      if not pcall(vim.cmd.close) then
+        vim.cmd.bdelete()
+      end
+    end, { buffer = args.buf, nowait = true, desc = "close" })
+  end,
+})
 
 -- hex view: the classic xxd round trip
 vim.api.nvim_create_user_command("Hex", function()
@@ -373,6 +389,7 @@ local cheatsheet = {
   "   Space d     debug ./<file> with lldb          (:Debug [prog])",
   "   Space a     the file's assembly, side by side  (:Asm)",
   "   Esc Esc     leave a terminal split; :q closes it",
+  "   q           close the quickfix list, a man page or the asm view",
   "",
   " READING CODE",
   "   K           man page for the word (libc first)",
