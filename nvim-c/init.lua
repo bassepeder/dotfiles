@@ -399,8 +399,29 @@ vim.api.nvim_create_autocmd("FileType", {
     end
     vim.keymap.set("n", "<Tab>", step("next", "first"), { buffer = args.buf, desc = "next entry" })
     vim.keymap.set("n", "<S-Tab>", step("prev", "last"), { buffer = args.buf, desc = "previous entry" })
+
+    -- Enter jumps to the entry and closes the list, like a picker would;
+    -- Esc closes it too (q is set above). ]q / [q or Space q bring it back.
+    local p = loclist and "l" or "c"
+    vim.keymap.set("n", "<CR>", function()
+      local entry = vim.fn.line(".")
+      vim.cmd(p .. p .. " " .. entry)
+      vim.cmd(p .. "close")
+    end, { buffer = args.buf, desc = "open entry, close the list" })
+    vim.keymap.set("n", "<Esc>", "<cmd>" .. p .. "close<cr>", { buffer = args.buf, nowait = true })
   end,
 })
+
+-- Space q: show the quickfix list again, or close it, from any window
+map("n", "<leader>q", function()
+  for _, win in ipairs(vim.fn.getwininfo()) do
+    if win.quickfix == 1 and win.loclist == 0 then
+      vim.cmd("cclose")
+      return
+    end
+  end
+  vim.cmd("botright copen")
+end, { desc = "quickfix list" })
 
 -- hex view: the classic xxd round trip
 vim.api.nvim_create_user_command("Hex", function()
@@ -478,8 +499,9 @@ local cheatsheet = {
   " LISTS (build errors, references)",
   "   Tab / S-Tab     next / previous entry, shown in the code",
   "   ]q / [q         the same, from anywhere",
-  "   Enter           jump to the entry",
-  "   q               close the list (also man pages and :Asm)",
+  "   Enter           jump to the entry and close the list",
+  "   q or Esc        close the list (q also man pages and :Asm)",
+  "   Space q         show the list again, or close it, from anywhere",
   "",
   " READING CODE",
   "   K               man page for the word (libc first)",
