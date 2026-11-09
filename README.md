@@ -58,7 +58,7 @@ Leader is Space. `?` shows these inside Neovim.
 |---|---|
 | `Space m` | build: `make`, or `make <file>` when there's no Makefile. Problems go to the quickfix list (`]q` `[q`) |
 | `Tab` `Shift-Tab` | in the quickfix list (build errors, references): step through the entries while the code window follows. In the finders: move through the results |
-| `Space r` | run `./<file>` in a terminal split |
+| `Space r` | run it in a terminal split: `make run` if the Makefile has that target, else `./<file>` |
 | `Space d` | debug it in lldb |
 | `Space a` | the file's `-O2` assembly next to it |
 | `K` | man page, libc first |

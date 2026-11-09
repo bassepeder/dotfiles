@@ -3,7 +3,7 @@
 -- Run it anywhere else with `NVIM_APPNAME=nvim-c nvim`.
 --
 --   <leader>m   build: `make`, or `make <file>` via make's built-in rules
---   <leader>r   run ./<file> in a terminal split      (:Run [cmd])
+--   <leader>r   `make run` if the Makefile has it, else ./<file>, in a terminal split  (:Run [cmd])
 --   <leader>d   debug ./<file> with lldb              (:Debug [prog])
 --   <leader>a   show the assembly for this file       (:Asm)
 --   :Hex        toggle a hex view of the buffer (open binaries with `nvim -b`)
@@ -283,10 +283,42 @@ end, { desc = "make" })
 local function term(cmd)
   vim.cmd("botright 15split")
   vim.cmd.terminal(cmd)
+  local buf = vim.api.nvim_get_current_buf()
+  local pid = vim.b[buf].terminal_job_pid
+  -- Closing the split stops everything it started. Neovim only stops the job
+  -- itself, so with `make run` the server would outlive make; the job has its
+  -- own process group, so signal all of it.
+  vim.bo[buf].bufhidden = "wipe"
+  vim.api.nvim_create_autocmd("BufWipeout", {
+    buffer = buf,
+    once = true,
+    callback = function()
+      pcall(vim.uv.kill, -pid, "sigterm")
+    end,
+  })
+  -- like the other panes: q closes it (out of terminal mode, after Esc Esc)
+  vim.keymap.set("n", "q", "<cmd>bwipeout!<cr>", { buffer = buf, nowait = true })
   vim.cmd.startinsert()
 end
+-- a Makefile with a `run:` target knows how to start the program best
+local function has_run_target()
+  for _, name in ipairs({ "Makefile", "makefile" }) do
+    if vim.fn.filereadable(name) == 1 then
+      for _, line in ipairs(vim.fn.readfile(name)) do
+        if line:match("^run%s*:") then
+          return true
+        end
+      end
+    end
+  end
+  return false
+end
 vim.api.nvim_create_user_command("Run", function(args)
-  term(args.args ~= "" and args.args or ("./" .. target()))
+  if args.args ~= "" then
+    term(args.args)
+  else
+    term(has_run_target() and "make run" or ("./" .. target()))
+  end
 end, { nargs = "*", complete = "file" })
 vim.api.nvim_create_user_command("Debug", function(args)
   term("lldb -- " .. (args.args ~= "" and args.args or ("./" .. target())))
@@ -438,7 +470,7 @@ local cheatsheet = {
   "",
   " BUILD AND RUN",
   "   Space m         build (make, or make <file>)",
-  "   Space r         run ./<file> in a terminal     (:Run [cmd])",
+  "   Space r         run: make run, or else ./<file>  (:Run [cmd])",
   "   Space d         debug ./<file> with lldb       (:Debug [prog])",
   "   Space a         the file's assembly beside it  (:Asm)",
   "   Esc Esc         leave a terminal split (:q closes it)",
