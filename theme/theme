@@ -6,6 +6,8 @@
 #                                 mode:   system (default) | light | dark
 #   theme font [id]               switch font (kitty + Neovide), or show it
 #   theme fonts                   list fonts as id|label|neovide guifont|size
+#   theme font-spec <id> <kitty|ghostty>
+#                                 print a font's config lines (used by cmode)
 #   theme variant [light|dark]    variant id for a slot, or the active one
 #   theme apply                   regenerate the per-tool files from the state
 #
@@ -78,6 +80,33 @@ font_field() { # id, field number -> field (fails for unknown ids)
   awk -F'|' -v id="$1" -v n="$2" '$1 == id { print $n; found = 1 } END { exit !found }' <<<"$FONTS"
 }
 
+# A font's settings as kitty or Ghostty config lines. Both reset what another
+# font may have set before, so the lines can replace any earlier font.
+font_spec() { # id, kitty|ghostty
+  local family size extra name style
+  family="$(font_field "$1" 3)" || return 1
+  size="$(font_field "$1" 5)"
+  extra="$(font_field "$1" 6)"
+  case "$2" in
+  kitty)
+    printf 'font_family %s\nfont_size %s\nmodify_font cell_height 100%%\n' "$family" "$size"
+    tr ';' '\n' <<<"$extra" | sed '/^$/d'
+    ;;
+  ghostty)
+    name="$(sed -E "s/.*family='([^']*)'.*/\1/" <<<"$family")"
+    style="$(sed -nE 's/.*style=([^ ]+).*/\1/p' <<<"$family")"
+    # font-family is a fallback list; "" clears it
+    printf 'font-family = ""\nfont-family = %s\nfont-style = %s\nfont-size = %s\nadjust-cell-height = 0%%\n' \
+      "$name" "${style:-default}" "$size"
+    tr ';' '\n' <<<"$extra" | sed -nE \
+      -e 's/^symbol_map ([^ ]+) (.*)$/font-codepoint-map = \1=\2/p' \
+      -e 's/^modify_font cell_height ([0-9]+)%$/adjust-cell-height = \1%/p' |
+      awk '/^adjust-cell-height/ { sub(/= /, ""); split($0, a, " "); printf "adjust-cell-height = %d%%\n", a[2] - 100; next } { print }'
+    ;;
+  *) return 1 ;;
+  esac
+}
+
 reload_kitty() {
   pkill -USR1 -x kitty 2>/dev/null || true
 }
@@ -139,12 +168,16 @@ font)
 fonts)
   awk -F'|' '{ print $1 "|" $2 "|" $4 "|" $5 }' <<<"$FONTS"
   ;;
+font-spec)
+  font_spec "${2:?usage: theme font-spec <id> <kitty|ghostty>}" "${3:-}" ||
+    { echo "theme: unknown font or terminal: ${2} ${3:-}" >&2; exit 1; }
+  ;;
 variant)
   slot "${2:-$(system_appearance)}"
   ;;
 apply) apply ;;
 *)
-  sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//' >&2
+  sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//' >&2
   exit 1
   ;;
 esac
