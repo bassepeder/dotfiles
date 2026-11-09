@@ -2,22 +2,18 @@
 -- Used inside cmode windows (scripts/cmode), where .zshrc sets NVIM_APPNAME=nvim-c.
 -- Run it anywhere else with `NVIM_APPNAME=nvim-c nvim`.
 --
---   <leader>m   build: `make`, or `make <file>` via make's built-in rules
---   <leader>r   `make run` if the Makefile has it, else ./<file>, in a terminal split  (:Run [cmd])
---   <leader>d   debug ./<file> with lldb              (:Debug [prog])
---   <leader>a   show the assembly for this file       (:Asm)
---   :Hex        toggle a hex view of the buffer (open binaries with `nvim -b`)
---   :Font [id]  switch this cmode window's font (a picker without an id)
---   K           man page (section 3 first, so libc)
---   gd ge       definition;  gD gE declaration;  gI implementation;  gy type definition
---   gn grr      references;  grn rename;  gK gh hover   (the main config's keys)
---   ]d [d       next/previous diagnostic, with its message;  <C-w>d  show it again
---   <leader><space> <leader>f   fuzzy-find files (fzf);  <leader>/  grep
---   <leader>, <leader>b         open buffers;  -  file browser
---   ?           this list as a cheat sheet in a popup   (:Keys)
---   q           close the quickfix list, man/help pages and the :Asm view
+--   ,ff  ,fg  ,fb   find files / grep / open buffers (fzf)
+--   Space e       file explorer (netrw sidebar)
+--   Space Space   list the problems (errors first)
+--   ,qf           show or hide the quickfix list
+--   K             man page (section 3 first, so libc)
+--   gd ge  gD gE  gI  gy  gn grr  grn  gK gh   go-to keys as in the main config
+--   ]d [d         next/previous problem, with its message
+--   ?             all of this as a cheat sheet   (:Keys)
+--   :make :Run :Debug :Asm :Hex :Font   see the cheat sheet
 
-vim.g.mapleader = " "
+vim.g.mapleader = "," -- as in the main config
+vim.g.maplocalleader = ","
 vim.g.c_syntax_for_h = 1 -- .h is C, not C++
 
 local o = vim.opt
@@ -256,29 +252,30 @@ for keys, def in pairs({
   end, { desc = def[2] })
 end
 
--- build: a Makefile if there is one, else make's built-in rule for this file,
--- which compiles foo.c into foo with $CC and $CFLAGS
+-- without a Makefile, make's built-in rule compiles foo.c into foo with
+-- $CC and $CFLAGS
 local function target()
   return vim.fn.expand("%:r")
 end
 local function has_makefile()
   return vim.fn.filereadable("Makefile") == 1 or vim.fn.filereadable("makefile") == 1
 end
-map("n", "<leader>m", function()
-  vim.cmd("silent! write")
-  vim.o.makeprg = has_makefile() and "make" or ("make " .. target())
-  vim.cmd("silent make!")
-  -- errors and warnings both open the list
-  local problems = #vim.tbl_filter(function(item)
-    return item.valid == 1
-  end, vim.fn.getqflist())
-  if problems > 0 then
+-- :make builds. It saves first, uses the Makefile if there is one (else
+-- `make <file>`), and opens the quickfix list when there are problems.
+o.autowrite = true
+vim.api.nvim_create_autocmd("BufEnter", {
+  callback = function()
+    if vim.bo.buftype == "" then
+      vim.bo.makeprg = has_makefile() and "make" or ("make " .. target())
+    end
+  end,
+})
+vim.api.nvim_create_autocmd("QuickFixCmdPost", {
+  pattern = "make",
+  callback = function()
     vim.cmd("botright cwindow")
-  else
-    vim.cmd("cclose")
-    vim.api.nvim_echo({ { vim.o.makeprg .. ": ok" } }, false, {})
-  end
-end, { desc = "make" })
+  end,
+})
 
 local function term(cmd)
   vim.cmd("botright 15split")
@@ -323,8 +320,6 @@ end, { nargs = "*", complete = "file" })
 vim.api.nvim_create_user_command("Debug", function(args)
   term("lldb -- " .. (args.args ~= "" and args.args or ("./" .. target())))
 end, { nargs = "*", complete = "file" })
-map("n", "<leader>r", "<cmd>Run<cr>", { desc = "run" })
-map("n", "<leader>d", "<cmd>Debug<cr>", { desc = "debug with lldb" })
 
 -- assembly for the current file at -O2, without the assembler directives
 vim.api.nvim_create_user_command("Asm", function()
@@ -365,7 +360,6 @@ vim.api.nvim_create_user_command("Asm", function()
     vim.cmd("wincmd p")
   end
 end, {})
-map("n", "<leader>a", "<cmd>Asm<cr>", { desc = "assembly" })
 
 -- q closes the panes that pop up (the quickfix list, man and help pages),
 -- like in the main config. The :Asm view sets its own above.
@@ -401,7 +395,7 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.keymap.set("n", "<S-Tab>", step("prev", "last"), { buffer = args.buf, desc = "previous entry" })
 
     -- Enter jumps to the entry and closes the list, like a picker would;
-    -- Esc closes it too (q is set above). ]q / [q or Space q bring it back.
+    -- Esc closes it too (q is set above). ]q / [q or ,qf bring it back.
     local p = loclist and "l" or "c"
     vim.keymap.set("n", "<CR>", function()
       local entry = vim.fn.line(".")
@@ -412,8 +406,8 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
--- Space q: show the quickfix list again, or close it, from any window
-map("n", "<leader>q", function()
+-- ,qf: show the quickfix list again, or close it, from any window
+map("n", "<leader>qf", function()
   for _, win in ipairs(vim.fn.getwininfo()) do
     if win.quickfix == 1 and win.loclist == 0 then
       vim.cmd("cclose")
@@ -487,21 +481,13 @@ end, {
 -- ? : a cheat sheet in a popup, since there's no which-key here
 local cheatsheet = {
   "",
-  " Space is the leader: press Space, then the key.",
+  " , is the leader, like in the main config.",
   "",
-  " BUILD AND RUN",
-  "   Space m         build (make, or make <file>)",
-  "   Space r         run: make run, or else ./<file>  (:Run [cmd])",
-  "   Space d         debug ./<file> with lldb       (:Debug [prog])",
-  "   Space a         the file's assembly beside it  (:Asm)",
-  "   Esc Esc         leave a terminal split (:q closes it)",
-  "",
-  " LISTS (build errors, references)",
-  "   Tab / S-Tab     next / previous entry, shown in the code",
-  "   ]q / [q         the same, from anywhere",
-  "   Enter           jump to the entry and close the list",
-  "   q or Esc        close the list (q also man pages and :Asm)",
-  "   Space q         show the list again, or close it, from anywhere",
+  " FINDING (in fzf: type to filter, Tab / S-Tab move, Enter opens)",
+  "   ,ff             find files",
+  "   ,fg             grep the project",
+  "   ,fb             open buffers",
+  "   Space e         file explorer (Enter opens, q closes)",
   "",
   " READING CODE",
   "   K               man page for the word (libc first)",
@@ -515,23 +501,29 @@ local cheatsheet = {
   "   grn             rename it everywhere",
   "",
   " PROBLEMS (the E and W in the margin)",
-  "   ]d              next error or warning, and its message",
-  "   [d              previous one, and its message",
+  "   Space Space     list them, errors first",
+  "   ]d / [d         next / previous one, with its message",
   "   Ctrl-w d        show the message again",
+  "",
+  " LISTS (problems, build errors, references)",
+  "   Tab / S-Tab     next / previous entry, shown in the code",
+  "   Enter           jump to the entry and close the list",
+  "   q or Esc        close the list",
+  "   ,qf             show the list again, or close it",
+  "   ]q / [q         next / previous entry from anywhere",
+  "",
+  " COMMANDS",
+  "   :make           build (make, or make <file>); problems open a list",
+  "   :Run [cmd]      make run, or ./<file>, in a split (q closes)",
+  "   :Debug [prog]   lldb on ./<file> in a split",
+  "   :Asm            the file's assembly beside it",
+  "   :Hex            hex view",
+  "   :Font [id]      this window's font",
+  "   Esc Esc         leave terminal mode in a split",
   "",
   " TYPING",
   "   Ctrl-x Ctrl-o   complete the word",
   "   Ctrl-n / Ctrl-p move through the suggestions",
-  "",
-  " FINDING (Tab / S-Tab move, Enter opens, Esc cancels)",
-  "   Space Space     files (also Space f)",
-  "   Space /         grep the project as you type",
-  "   Space ,         open buffers (also Space b)",
-  "   -               file browser (Enter opens, - goes up)",
-  "",
-  " COMMANDS",
-  "   :Font [id]      this window's font",
-  "   :Hex            hex view",
   "",
   " q, Esc or ? closes this. Search backwards with / and then N.",
   "",
@@ -654,11 +646,68 @@ local function buffers()
   end)
 end
 
-map("n", "<leader><space>", find_files, { desc = "find file" })
-map("n", "<leader>f", find_files, { desc = "find file" })
-map("n", "<leader>/", grep, { desc = "grep" })
-map("n", "<leader>,", buffers, { desc = "buffers" })
-map("n", "<leader>b", buffers, { desc = "buffers" })
-map("n", "-", "<cmd>Explore<cr>", { desc = "file browser" })
+-- the same keys as the main config's pickers
+map("n", "<leader>ff", find_files, { desc = "find files" })
+map("n", "<leader>fg", grep, { desc = "grep" })
+map("n", "<leader>fb", buffers, { desc = "buffers" })
+
+-- Space e: a plain explorer, netrw as a tree in a sidebar. Enter opens a
+-- file in the window next to it; q (or Space e again) closes it.
+vim.g.netrw_banner = 0
+vim.g.netrw_liststyle = 3
+vim.g.netrw_browse_split = 4
+vim.g.netrw_winsize = 25
+-- Opens on the working directory with the current file revealed: the folders
+-- on the way are opened and the cursor is put on it, like Snacks' explorer
+local function explorer()
+  if vim.t.netrw_lexbufnr and vim.fn.bufwinnr(vim.t.netrw_lexbufnr) ~= -1 then
+    vim.cmd("Lexplore") -- without a folder it toggles, so this closes it
+    return
+  end
+  local file = vim.fn.expand("%:p")
+  local cwd = vim.fn.getcwd()
+  vim.cmd("Lexplore " .. vim.fn.fnameescape(cwd))
+  if not vim.startswith(file, cwd .. "/") then
+    return -- the file is outside the tree
+  end
+  vim.wo.cursorline = true
+  local parts = vim.split(file:sub(#cwd + 2), "/", { plain = true })
+  for depth, part in ipairs(parts) do
+    -- tree lines are "| " per level, then the name ("dir/", "exe*")
+    local name = part:gsub("\\", "\\\\") .. (depth < #parts and "/" or "")
+    if vim.fn.search("\\V\\^" .. ("| "):rep(depth) .. name .. "\\(*\\)\\=\\$", "W") == 0 then
+      return
+    end
+    if depth < #parts then
+      vim.cmd.normal(vim.keycode("<CR>")) -- netrw's own key: open the folder
+    end
+  end
+end
+map("n", "<space>e", explorer, { desc = "explorer" })
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "netrw",
+  callback = function(args)
+    vim.keymap.set("n", "q", function()
+      if vim.t.netrw_lexbufnr == args.buf then
+        vim.cmd("Lexplore")
+      elseif not pcall(vim.cmd.close) then
+        vim.cmd.bdelete()
+      end
+    end, { buffer = args.buf, nowait = true, desc = "close" })
+  end,
+})
+
+-- Space Space: the problems in the quickfix list, like the main config's
+-- Trouble "cascade": only errors while there are any, then warnings, ...
+map("n", "<space><space>", function()
+  local counts = vim.diagnostic.count()
+  for severity = vim.diagnostic.severity.ERROR, vim.diagnostic.severity.HINT do
+    if (counts[severity] or 0) > 0 then
+      vim.diagnostic.setqflist({ severity = severity, title = "Problems" })
+      return
+    end
+  end
+  vim.api.nvim_echo({ { "no problems" } }, false, {})
+end, { desc = "problems" })
 map("n", "<esc>", "<cmd>nohlsearch<cr>")
 map("t", "<esc><esc>", "<c-\\><c-n>")
