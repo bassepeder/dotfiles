@@ -17,11 +17,15 @@ vim.g.c_syntax_for_h = 1 -- .h is C, not C++
 
 local o = vim.opt
 o.number = true
-o.tabstop = 8
-o.shiftwidth = 8
-o.softtabstop = 0
-o.expandtab = false
-o.cinoptions = ":0,l1,t0" -- K&R: case labels at the switch, return type on its own
+-- Indentation follows the file (see detect_indent below). New files get 2
+-- spaces, like ~/.clang-format (LLVM), so typing and formatting agree.
+o.expandtab = true
+o.shiftwidth = 2
+o.softtabstop = -1 -- follow shiftwidth
+o.tabstop = 8 -- how wide a real tab shows
+o.list = true -- make tabs and trailing spaces visible, so a mix stands out
+o.listchars = { tab = "» ", trail = "·", nbsp = "+" }
+o.cinoptions = ":0,l1,t0" -- case labels at the switch, return type on its own
 o.colorcolumn = "80"
 o.mouse = ""
 o.clipboard = "unnamedplus"
@@ -44,6 +48,49 @@ require("modus-themes").setup({
   styles = { comments = { italic = false }, keywords = { italic = false } },
 })
 vim.cmd.colorscheme("modus_vivendi")
+
+-- Keep whatever indentation a file already uses: tabs stay tabs, and space
+-- indentation keeps its width (the largest of 8/4/2 that ~90% of the indented
+-- lines are a multiple of). An .editorconfig, which Neovim applies itself, wins.
+local function detect_indent(buf)
+  if next(vim.b[buf].editorconfig or {}) then
+    return
+  end
+  local tabs, spaced, widths = 0, 0, {}
+  for _, line in ipairs(vim.api.nvim_buf_get_lines(buf, 0, 1000, false)) do
+    local ws = line:match("^([ \t]+)%S")
+    -- skip " * " block comment continuations, which are indented by one
+    if ws and not line:match("^%s+%*") then
+      if ws:find("\t") then
+        tabs = tabs + 1
+      else
+        spaced = spaced + 1
+        widths[#widths + 1] = #ws
+      end
+    end
+  end
+  local bo = vim.bo[buf]
+  if tabs > spaced then
+    bo.expandtab = false
+    bo.shiftwidth = 0 -- follow tabstop
+  elseif spaced > 0 then
+    for _, w in ipairs({ 8, 4, 2 }) do
+      local fits = #vim.tbl_filter(function(n)
+        return n % w == 0
+      end, widths)
+      if fits >= 0.9 * spaced then
+        bo.expandtab = true
+        bo.shiftwidth = w
+        return
+      end
+    end
+  end
+end
+vim.api.nvim_create_autocmd("BufReadPost", {
+  callback = function(args)
+    detect_indent(args.buf)
+  end,
+})
 
 -- file:line:col and diagnostic counts, nothing else
 function _G.cmode_status()
