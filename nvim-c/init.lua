@@ -6,8 +6,8 @@
 --   Space e       file explorer (netrw sidebar)
 --   Space Space   list the problems (errors first)
 --   ,qf           show or hide the quickfix list
---   K             man page (section 3 first, so libc)
---   gd ge  gD gE  gI  gy  gn grr  grn  gK gh   go-to keys as in the main config
+--   gd ge  gr gn  gD gE  gI  gy  K gh  gK  ]] [[  ,cr  ,ca   LSP keys as in the main config
+--   M             man page for the word (system calls and libc first)
 --   ]d [d         next/previous problem, with its message
 --   ?             all of this as a cheat sheet   (:Keys)
 --   :make :Run :Debug :Asm :Hex :Font   see the cheat sheet
@@ -236,31 +236,105 @@ vim.api.nvim_create_autocmd("BufWritePre", {
 
 local map = vim.keymap.set
 
--- K: man pages, libc (section 3) first
-map("n", "K", function()
-  local word = vim.fn.expand("<cword>")
-  if not pcall(vim.cmd.Man, { args = { "3", word } }) and not pcall(vim.cmd.Man, word) then
-    vim.notify("No manual entry for " .. word, vim.log.levels.WARN)
-  end
-end, { desc = "man page" })
-map("n", "gK", vim.lsp.buf.hover, { desc = "clangd hover" })
-
--- the same go-to keys as the main config (LazyVim's plus its own ge/gE/gn/gh);
--- with several results they open in the quickfix list
+-- The LSP keys of the main config: LazyVim's defaults plus its own ge, gE,
+-- gn and gh, on Neovim's built-in LSP instead of Snacks pickers. Several
+-- results open in the quickfix list. M opens the man page.
 local lsp = vim.lsp.buf
-for keys, def in pairs({
-  gd = { lsp.definition, "definition" },
-  ge = { lsp.definition, "definition" },
-  gD = { lsp.declaration, "declaration" },
-  gE = { lsp.declaration, "declaration" },
-  gI = { lsp.implementation, "implementation" },
-  gy = { lsp.type_definition, "type definition" },
-  gn = { lsp.references, "references" },
-  gh = { lsp.hover, "hover" },
-}) do
-  map("n", keys, function()
-    def[1]()
-  end, { desc = def[2] })
+local lsp_keys = {
+  { "gd", lsp.definition, "definition" },
+  { "ge", lsp.definition, "definition" },
+  { "gr", lsp.references, "references" },
+  { "gn", lsp.references, "references" },
+  { "gD", lsp.declaration, "declaration" },
+  { "gE", lsp.declaration, "declaration" },
+  { "gI", lsp.implementation, "implementation" },
+  { "gy", lsp.type_definition, "type definition" },
+  { "K", lsp.hover, "hover" },
+  { "gh", lsp.hover, "hover" },
+  { "gK", lsp.signature_help, "signature help" },
+  { "<leader>cr", lsp.rename, "rename" },
+  { "<leader>ca", lsp.code_action, "code action", { "n", "x" } },
+  {
+    "<leader>cA",
+    function()
+      lsp.code_action({ context = { only = { "source" }, diagnostics = {} } })
+    end,
+    "source action",
+  },
+  { "<leader>ss", lsp.document_symbol, "symbols in the file" },
+  { "<space>o", lsp.document_symbol, "symbols in the file" },
+  { "<leader>sS", lsp.workspace_symbol, "symbols in the project" },
+  { "<space>O", lsp.workspace_symbol, "symbols in the project" },
+}
+for _, k in ipairs(lsp_keys) do
+  map(k[4] or "n", k[1], function()
+    k[2]()
+  end, { desc = k[3], nowait = k[1] == "gr" })
+end
+map("i", "<C-k>", lsp.signature_help, { desc = "signature help" })
+
+-- M: the man page for the word under the cursor. System calls (section 2)
+-- and the C library (3) come first, so open is open(2) and printf is
+-- printf(3), not the shell command or a Perl module.
+map("n", "M", function()
+  local word = vim.fn.expand("<cword>")
+  for _, args in ipairs({ { "2", word }, { "3", word }, { word } }) do
+    if pcall(vim.cmd.Man, { args = args }) then
+      return
+    end
+  end
+  vim.notify("No man page for " .. word, vim.log.levels.WARN)
+end, { desc = "man page" })
+
+-- ]] / [[ (and Alt-n / Alt-p): the next/previous use of the word under the
+-- cursor, as clangd sees it, like Snacks.words in the main config
+local function jump_use(dir)
+  local client = vim.lsp.get_clients({ bufnr = 0, method = "textDocument/documentHighlight" })[1]
+  if not client then
+    return
+  end
+  local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
+  client:request("textDocument/documentHighlight", params, function(err, result)
+    if err or not result or #result == 0 then
+      return
+    end
+    local starts = vim.tbl_map(function(h)
+      return { h.range.start.line + 1, h.range.start.character }
+    end, result)
+    table.sort(starts, function(a, b)
+      return a[1] < b[1] or (a[1] == b[1] and a[2] < b[2])
+    end)
+    local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+    local function after(p)
+      return p[1] > row or (p[1] == row and p[2] > col)
+    end
+    local target
+    if dir > 0 then
+      for _, p in ipairs(starts) do
+        if after(p) then
+          target = p
+          break
+        end
+      end
+      target = target or starts[1]
+    else
+      for i = #starts, 1, -1 do
+        local p = starts[i]
+        if p[1] < row or (p[1] == row and p[2] < col) then
+          target = p
+          break
+        end
+      end
+      target = target or starts[#starts]
+    end
+    vim.cmd("normal! m'")
+    vim.api.nvim_win_set_cursor(0, target)
+  end, 0)
+end
+for _, k in ipairs({ { "]]", 1 }, { "[[", -1 }, { "<A-n>", 1 }, { "<A-p>", -1 } }) do
+  map("n", k[1], function()
+    jump_use(k[2])
+  end, { desc = k[2] > 0 and "next use" or "previous use" })
 end
 
 -- without a Makefile, make's built-in rule compiles foo.c into foo with
@@ -500,19 +574,24 @@ local cheatsheet = {
   "   ,fb             open buffers",
   "   Space e         file explorer (Enter opens, q closes)",
   "",
-  " READING CODE",
-  "   K               man page for the word (libc first)",
-  "   gh or gK        clangd: type, signature, docs",
-  "   gd or ge        go to the definition",
-  "   Ctrl-o          jump back",
+  " READING CODE (the main config's keys)",
+  "   gd or ge        go to the definition (Ctrl-o jumps back)",
+  "   gr or gn        list everywhere it's used",
   "   gD or gE        go to the declaration",
   "   gI              go to the implementation",
   "   gy              go to the type definition",
-  "   gn or grr       list everywhere it's used",
-  "   grn             rename it everywhere",
+  "   K or gh         hover: type, signature, docs",
+  "   gK              signature help (Ctrl-k while typing)",
+  "   ]] / [[         next / previous use of the word",
+  "   ,cr             rename it everywhere",
+  "   ,ca / ,cA       code action / source action",
+  "   ,ss or Space o  symbols in the file (,sS / Space O: project)",
+  "   M               man page for the word (syscalls, libc first)",
   "",
   " PROBLEMS (the E and W in the margin)",
   "   Space Space     list them, errors first",
+  "   Space i         list all of them",
+  "   Space d         show or hide the list",
   "   ]d / [d         next / previous one, with its message",
   "   Ctrl-w d        show the message again",
   "",
@@ -725,5 +804,20 @@ map("n", "<space><space>", function()
   end
   vim.api.nvim_echo({ { "no problems" } }, false, {})
 end, { desc = "problems" })
+
+-- Space i: every problem, not just the worst kind; Space d shows or hides
+-- the list (like Trouble in the main config)
+map("n", "<space>i", function()
+  vim.diagnostic.setqflist({ title = "Problems" })
+end, { desc = "all problems" })
+map("n", "<space>d", function()
+  for _, win in ipairs(vim.fn.getwininfo()) do
+    if win.quickfix == 1 and win.loclist == 0 then
+      vim.cmd("cclose")
+      return
+    end
+  end
+  vim.diagnostic.setqflist({ title = "Problems" })
+end, { desc = "problems list" })
 map("n", "<esc>", "<cmd>nohlsearch<cr>")
 map("t", "<esc><esc>", "<c-\\><c-n>")
