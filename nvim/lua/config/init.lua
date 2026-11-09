@@ -9,9 +9,8 @@ vim.opt.rtp:prepend(vim.env.LAZY or lazypath)
 
 -- Configure LazyVim
 -- https://www.lazyvim.org/configuration/lazy.nvim
--- not "catppuccin": Neovim 0.12 ships a built-in colorscheme by that name, which
--- shadows the plugin so lazy.nvim never loads it (and its opts never apply)
-local theme = "catppuccin-nvim"
+-- shared with kitty/delta/bat/btop, switched with :Theme (see config/theme.lua)
+local theme = require("config.theme").colorscheme()
 
 require("lazy").setup({
   spec = {
@@ -50,3 +49,5 @@ require("lazy").setup({
     },
   },
 })
+
+require("config.theme").setup()

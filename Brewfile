@@ -35,3 +35,7 @@ cask "kitty"
 cask "neovide-app"
 cask "firefox"
 cask "font-jetbrains-mono-nerd-font"
+cask "font-fira-code-nerd-font"
+cask "font-terminess-ttf-nerd-font" # Terminus
+cask "font-symbols-only-nerd-font" # icon fallback for fonts without Nerd glyphs
+# C64 Pro Mono has no cask (its license forbids redistribution); install.sh fetches it

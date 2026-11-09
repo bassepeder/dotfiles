@@ -5,7 +5,8 @@
 vim.g.neovide_floating_corner_radius = 0.5
 vim.g.neovide_proxy_icon = true
 
-vim.o.guifont = "JetBrainsMono Nerd Font Mono:h13"
+-- shared with kitty, switched with :Font (see config/theme.lua)
+require("config.theme").apply_guifont()
 
 -- Scrolling
 -- vim.g.neovide_scroll_animation_length = 0

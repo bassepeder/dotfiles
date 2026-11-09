@@ -3,7 +3,7 @@
 [core]
 	ignorecase = false
 	editor = nvim
-	pager = delta --features catppuccin-$(defaults read -g AppleInterfaceStyle >/dev/null 2>&1 && echo mocha || echo latte)
+	pager = delta --features theme-$(defaults read -g AppleInterfaceStyle >/dev/null 2>&1 && echo dark || echo light)
 [commit]
 	gpgsign = false
 [fetch]
@@ -25,7 +25,7 @@
 [alias]
 	l = log --pretty=format:\"%Cred%h%Creset %Cblue%ad%Creset %Cgreen%an%Creset %s\"
 [interactive]
-	diffFilter = delta --color-only --features catppuccin-$(defaults read -g AppleInterfaceStyle >/dev/null 2>&1 && echo mocha || echo latte)
+	diffFilter = delta --color-only --features theme-$(defaults read -g AppleInterfaceStyle >/dev/null 2>&1 && echo dark || echo light)
 [delta]
 	navigate = false
 	true-color = always
@@ -47,6 +47,33 @@
 	plus-emph-style = "bold syntax #4e6356"
 	plus-style = "syntax #394545"
 	map-styles = "bold purple => syntax \"#5b4e74\", bold blue => syntax \"#445375\", bold cyan => syntax \"#446170\", bold yellow => syntax \"#6b635b\""
+[delta "modus-operandi"]
+	light = true
+	syntax-theme = modus-operandi
+	minus-style = syntax "#ffd8d5"
+	minus-non-emph-style = syntax "#ffe9e9"
+	minus-emph-style = syntax "#f3b5af"
+	line-numbers-minus-style = "#8f1313"
+	plus-style = syntax "#c1f2d1"
+	plus-non-emph-style = syntax "#d8f8e1"
+	plus-emph-style = syntax "#aee5be"
+	line-numbers-plus-style = "#005000"
+	line-numbers-zero-style = "#595959"
+[delta "modus-vivendi"]
+	dark = true
+	syntax-theme = modus-vivendi
+	minus-style = syntax "#4f1119"
+	minus-non-emph-style = syntax "#380a0f"
+	minus-emph-style = syntax "#781a1f"
+	line-numbers-minus-style = "#ffbfbf"
+	plus-style = syntax "#00381f"
+	plus-non-emph-style = syntax "#002910"
+	plus-emph-style = syntax "#034f2f"
+	line-numbers-plus-style = "#a0e0a0"
+	line-numbers-zero-style = "#989898"
+# theme-light / theme-dark point at one of the variants above; see theme/theme
+[include]
+	path = ~/.config/theme/delta.gitconfig
 [include]
 	path = ~/.gitconfig.local
 [filter "lfs"]

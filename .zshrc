@@ -49,8 +49,7 @@ if command -v eza >/dev/null; then
 fi
 if command -v bat >/dev/null; then
   alias cat='bat'
-  export BAT_THEME_LIGHT="Catppuccin Latte"
-  export BAT_THEME_DARK="Catppuccin Mocha"
+  # light/dark themes come from ~/.config/bat/config, written by theme/theme
   export MANPAGER="sh -c 'col -bx | bat -l man -p'"
   export MANROFFOPT="-c"
 fi
@@ -93,7 +92,7 @@ where-from() { realpath "$(which "$1")" }
 url-sha256() { curl -sL "$1" | shasum -a 256 | cut -d ' ' -f 1 | xxd -r -p | base64 }
 c() { printf "%s\n" "$@" | bc -l }
 dl() { $HOME/dotfiles/yabai/scripts/dev-layout.sh }
-# btop can't follow the macOS appearance itself, so pick the theme at launch
+# btop can't follow the macOS appearance itself, so pick the theme at launch (see theme/theme)
 #btop() { command btop --themes-dir ~/.config/btop/themes/$(defaults read -g AppleInterfaceStyle &>/dev/null && echo mocha || echo latte) "$@" }
 
 btop () {
@@ -107,7 +106,7 @@ btop () {
     fi
 
     local theme
-    theme=$(defaults read -g AppleInterfaceStyle &>/dev/null && echo mocha || echo latte)
+    theme=$("$HOME/.config/theme/theme" variant)
 
     command /opt/homebrew/bin/btop \
         --config "$config" \
