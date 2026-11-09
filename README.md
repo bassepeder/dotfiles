@@ -75,6 +75,7 @@ Leader is Space. `?` shows these inside Neovim.
 | `Space ,` `Space b` | open buffers |
 | `-` | file browser |
 | `Esc Esc` | leave a terminal split |
+| `q` | close the quickfix list, a man or help page, or the assembly view |
 | `:Hex` | hex view (open binaries with `nvim -b`) |
 | `:Font` | this window's font |
 
