@@ -1,20 +1,112 @@
 #!/usr/bin/env bash
-# Open a stripped-down console for writing C: the Commodore 64 font on Modus
-# Vivendi black, a bare zsh prompt, plain BSD tools, strict C99 builds and a
-# plugin-free Neovim (nvim-c).
+# Open a stripped-down console for writing C: Modus Vivendi black, a bare zsh
+# prompt, plain BSD tools, strict C99 builds and a plugin-free Neovim (nvim-c).
 #
-#   cmode [--terminus] [dir]     dir defaults to the current one
+#   cmode [--ghostty | --kitty] [--c64] [dir]
+#   cmode font [id]       inside a cmode window: switch its font, or show it
+#
+#   --ghostty    Ghostty with a CRT pass recreating the cool-retro-term
+#                profile in cool_retro_term.json (default)
+#   --kitty      kitty, plain and sharp
+#   --c64        the Commodore 64 font instead of your usual one (`theme font`)
+#   dir          where to start; defaults to the current directory
+#
+# Fonts are the ones from `theme fonts`. Each window gets its own font file,
+# so `cmode font` (or :Font in nvim-c) only changes that window.
 set -euo pipefail
 
-font=()
-if [ "${1:-}" = "--terminus" ]; then
-  font=(-o "font_family=family='Terminess Nerd Font Mono'" -o "font_size=15"
-    -o "modify_font=cell_height 100%")
-  shift
+DOTFILES="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+THEME="$DOTFILES/theme/theme"
+
+usage() { sed -n '5,15p' "$0" | sed 's/^# \{0,1\}//'; }
+die() {
+  echo "cmode: $*" >&2
+  exit 1
+}
+
+write_font() { # id, kitty|ghostty, file
+  local spec
+  spec="$("$THEME" font-spec "$1" "$2" 2>/dev/null)" || die "unknown font: $1 (see: theme fonts)"
+  printf '# font: %s\n%s\n' "$1" "$spec" >"$3"
+}
+
+# the Ghostty process this shell runs in
+own_ghostty() {
+  local pid=$$
+  while [ "$pid" -gt 1 ]; do
+    [ "$(basename "$(ps -o comm= -p "$pid")")" = ghostty ] && echo "$pid" && return
+    pid="$(ps -o ppid= -p "$pid" | tr -d ' ')"
+  done
+  return 1
+}
+
+font_cmd() {
+  [ -n "${CMODE_FONT_FILE:-}" ] && [ -n "${CMODE_TERM:-}" ] ||
+    die "\`cmode font\` only works inside a cmode window"
+  if [ -z "${1:-}" ]; then
+    sed -n 's/^# font: //p' "$CMODE_FONT_FILE"
+    return
+  fi
+  write_font "$1" "$CMODE_TERM" "$CMODE_FONT_FILE"
+  case "$CMODE_TERM" in
+  kitty) kill -USR1 "$KITTY_PID" ;; # each cmode window is its own kitty
+  ghostty)
+    # each cmode window is its own Ghostty too; reload just that one
+    local pid
+    pid="$(own_ghostty)" || die "can't find this window's Ghostty"
+    osascript -l JavaScript -e "const a = Application($pid);
+      a.performAction('reload_config', { on: a.frontWindow().selectedTab().focusedTerminal() })" >/dev/null
+    ;;
+  esac
+}
+
+if [ "${1:-}" = font ]; then
+  font_cmd "${2:-}"
+  exit
 fi
+
+term=ghostty
+font="$("$THEME" font)"
+while [ $# -gt 0 ]; do
+  case "$1" in
+  --ghostty) term=ghostty ;;
+  --kitty) term=kitty ;;
+  --c64) font=c64 ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  -*)
+    echo "cmode: unknown option $1" >&2
+    usage >&2
+    exit 1
+    ;;
+  *) break ;;
+  esac
+  shift
+done
 dir="$(cd "${1:-.}" && pwd)"
 
-kitty="$(command -v kitty || echo /Applications/kitty.app/Contents/MacOS/kitty)"
-KITTY_CONFIG_DIRECTORY="$HOME/.config/kitty-cmode" nohup "$kitty" \
-  --title cmode --directory "$dir" ${font[@]+"${font[@]}"} >/dev/null 2>&1 &
-disown
+state="${TMPDIR:-/tmp}/cmode"
+mkdir -p "$state"
+font_file="$(mktemp "$state/font.XXXXXX")"
+write_font "$font" "$term" "$font_file"
+
+case "$term" in
+ghostty)
+  # Ghostty reads config files after the command line, so per-window settings
+  # go in files loaded after the main one
+  session="$(mktemp "$state/session.XXXXXX")"
+  echo "command = /usr/bin/env CMODE=1 CMODE_TERM=ghostty CMODE_FONT_FILE=$font_file /bin/zsh -l" >"$session"
+  # -n: a separate Ghostty instance, so its config doesn't touch other windows
+  open -na Ghostty --args --config-default-files=false \
+    --config-file="$HOME/.config/ghostty-cmode/config" \
+    --config-file="$font_file" --config-file="$session" --working-directory="$dir"
+  ;;
+kitty)
+  kitty="$(command -v kitty || echo /Applications/kitty.app/Contents/MacOS/kitty)"
+  CMODE_TERM=kitty CMODE_FONT_FILE="$font_file" KITTY_CONFIG_DIRECTORY="$HOME/.config/kitty-cmode" \
+    nohup "$kitty" --title cmode --directory "$dir" >/dev/null 2>&1 &
+  disown
+  ;;
+esac

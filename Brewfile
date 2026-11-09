@@ -33,6 +33,7 @@ brew "sbt"
 brew "coursier"
 
 cask "kitty"
+cask "ghostty" # cmode's default terminal (scripts/cmode)
 cask "neovide-app"
 cask "firefox"
 cask "font-jetbrains-mono-nerd-font"

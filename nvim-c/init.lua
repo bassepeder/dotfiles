@@ -7,6 +7,7 @@
 --   <leader>d   debug ./<file> with lldb              (:Debug [prog])
 --   <leader>a   show the assembly for this file       (:Asm)
 --   :Hex        toggle a hex view of the buffer (open binaries with `nvim -b`)
+--   :Font [id]  switch this cmode window's font (a picker without an id)
 --   K           man page (section 3 first, so libc)
 --   gK          clangd hover;  <C-]> definition;  grr references;  grn rename
 --   ]d [d       next/previous diagnostic;  <C-w>d  show it
@@ -232,6 +233,53 @@ vim.api.nvim_create_user_command("Hex", function()
     vim.bo.filetype = "xxd"
   end
 end, {})
+
+-- :Font: this cmode window's font, via `cmode font` (fonts from `theme fonts`)
+local cmode = vim.fn.expand("~/.local/bin/cmode")
+local function fonts()
+  local list = {}
+  for _, line in ipairs(vim.fn.systemlist({ vim.fn.expand("~/.local/bin/theme"), "fonts" })) do
+    local id, label = line:match("^([^|]+)|([^|]+)")
+    if id then
+      list[#list + 1] = { id = id, label = label }
+    end
+  end
+  return list
+end
+local function set_font(id)
+  local res = vim.system({ cmode, "font", id }, { text = true }):wait()
+  if res.code ~= 0 then
+    vim.notify(vim.trim(res.stderr), vim.log.levels.ERROR)
+  else
+    vim.api.nvim_echo({ { "font: " .. id } }, false, {})
+  end
+end
+vim.api.nvim_create_user_command("Font", function(args)
+  if not vim.env.CMODE_FONT_FILE then
+    return vim.notify(":Font only works inside a cmode window", vim.log.levels.WARN)
+  end
+  if args.args ~= "" then
+    return set_font(args.args)
+  end
+  local current = vim.trim(vim.fn.system({ cmode, "font" }))
+  vim.ui.select(fonts(), {
+    prompt = "Font",
+    format_item = function(f)
+      return (f.id == current and "* " or "  ") .. f.label
+    end,
+  }, function(f)
+    if f then
+      set_font(f.id)
+    end
+  end)
+end, {
+  nargs = "?",
+  complete = function()
+    return vim.tbl_map(function(f)
+      return f.id
+    end, fonts())
+  end,
+})
 
 map("n", "<leader>f", ":find ", { desc = "find file" })
 map("n", "<leader>b", ":ls<cr>:b ", { desc = "buffer" })

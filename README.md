@@ -17,13 +17,71 @@ theme                    # show the current setting
 
 ## cmode
 
-`cmode [--terminus] [dir]` opens a separate kitty window for writing C that feels like an old console. It uses the Commodore 64 font (C64 Pro Mono) on Modus Vivendi (deuteranopia variant) black and stays opaque, whatever the shared theme is. Inside it:
+`cmode` opens a separate terminal window for writing C that feels like an old console. It has a bare prompt, plain tools, strict C99 builds and a small Neovim with no plugins. Nothing in it changes your normal setup.
 
-- **Shell:** a bare prompt (`[139] ~/src/kilo $` after a segfault), with no starship, no autosuggestions and plain BSD `ls`/`cat`/`man`.
-- **Builds:** strict C99 by default: `CFLAGS='-std=c99 -Wall -Wextra -Wpedantic -g -O0 -fsanitize=address,undefined'`, so `make foo` builds `foo.c` without a Makefile.
-- **Editor:** `nvim` is `nvim-c/`, a plugin-free config. It has clangd for definitions and errors, `:make` with the quickfix list, `K` for libc man pages, `<leader>a` for the file's assembly, `:Hex`, and lldb in a split. The key list is at the top of `nvim-c/init.lua`. For Makefile projects, run `bear -- make` once so clangd sees the real flags.
+<details>
+<summary><b>Usage, options and the nvim-c keybindings</b></summary>
 
-`--terminus` uses Terminus instead of the C64 font.
+### Usage
+
+```bash
+cmode                 # Ghostty, in the current directory
+cmode --kitty ~/src   # kitty, starting in ~/src
+cmode --c64           # the Commodore 64 font
+```
+
+| Option | What it does |
+|---|---|
+| `--ghostty` | Ghostty with a CRT pass (`ghostty-cmode/crt.glsl`) that recreates the cool-retro-term profile in `cool_retro_term.json`: colours at half strength, a dark frame with rounded corners. This is the default. |
+| `--kitty` | kitty, plain and sharp, with no CRT effect. |
+| `--c64` | The Commodore 64 font (C64 Pro Mono) instead of your usual one. |
+| `dir` | Where the window starts. Defaults to the current directory. |
+| `-h`, `--help` | Show the usage. |
+
+Both terminals use Modus Vivendi (the deuteranopia variant, which uses yellow and blue instead of red and green) on black, whatever the shared theme is.
+
+### Fonts
+
+A cmode window starts in your usual font (`theme font`), or C64 with `--c64`. Every window has its own font file, so changing the font affects only that window:
+
+- `:Font` in nvim-c opens a picker, and `:Font c64` switches directly.
+- `cmode font <id>` does the same from the window's shell. `cmode font` alone shows the current font.
+
+The ids are the ones in `theme fonts`: `jetbrains`, `fira`, `terminus` and `c64`.
+
+### Inside the window
+
+- **Prompt:** just `~/src/kilo $`. A failing command's exit code appears in front, e.g. `[134] ~/src/kilo $` when AddressSanitizer aborts.
+- **Shell:** no starship, no autosuggestions, and plain BSD `ls`, `cat` and `man`.
+- **Builds:** `CFLAGS='-std=c99 -Wall -Wextra -Wpedantic -g -O0 -fsanitize=address,undefined'`, so `make foo` builds `foo.c` without a Makefile.
+- **Editor:** `nvim` runs `nvim-c/`. clangd uses C99 flags unless the project has a `compile_commands.json`. For a Makefile project, run `bear -- make` once to create it.
+
+### nvim-c keybindings
+
+The leader key is <kbd>Space</kbd>.
+
+| Key / command | What it does |
+|---|---|
+| <kbd>Space</kbd> <kbd>m</kbd> | Build. Runs `make` if there's a Makefile, else `make <file>`. Errors and warnings open the quickfix list. |
+| <kbd>Space</kbd> <kbd>r</kbd> / `:Run [cmd]` | Run `./<file>` (or `cmd`) in a terminal split. |
+| <kbd>Space</kbd> <kbd>d</kbd> / `:Debug [prog]` | Debug `./<file>` (or `prog`) with lldb in a terminal split. |
+| <kbd>Space</kbd> <kbd>a</kbd> / `:Asm` | Show the file's `-O2` assembly in a split. |
+| `:Hex` | Toggle a hex view of the buffer. Open binaries with `nvim -b`. |
+| `:Font [id]` | Switch this window's font. Without an id it opens a picker. |
+| <kbd>K</kbd> | Man page for the word under the cursor, libc (section 3) first. |
+| <kbd>g</kbd> <kbd>K</kbd> | clangd hover. |
+| <kbd>Ctrl</kbd>+<kbd>]</kbd> | Go to the definition. |
+| <kbd>g</kbd> <kbd>r</kbd> <kbd>r</kbd> / <kbd>g</kbd> <kbd>r</kbd> <kbd>n</kbd> | References / rename (Neovim defaults). |
+| <kbd>]</kbd> <kbd>d</kbd> / <kbd>[</kbd> <kbd>d</kbd> | Next / previous diagnostic. <kbd>Ctrl</kbd>+<kbd>w</kbd> <kbd>d</kbd> shows the message. |
+| <kbd>Ctrl</kbd>+<kbd>x</kbd> <kbd>Ctrl</kbd>+<kbd>o</kbd> | Completion, only when you ask for it. |
+| <kbd>Space</kbd> <kbd>f</kbd> | `:find`, which searches the whole tree. |
+| <kbd>Space</kbd> <kbd>b</kbd> | List the buffers and pick one. |
+| <kbd>-</kbd> | File browser (netrw). |
+| <kbd>Esc</kbd> <kbd>Esc</kbd> | Leave terminal mode in a terminal split. |
+
+Indentation follows each file (tabs stay tabs, 2/4/8 spaces stay as they are), an `.editorconfig` wins, and new files get 2 spaces. Tabs show as `»` and trailing spaces as `·`.
+
+</details>
 
 ## Install
 

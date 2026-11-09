@@ -1,0 +1,49 @@
+# cmode in Ghostty (scripts/cmode --ghostty): Modus Vivendi deuteranopia, run through crt.glsl, which recreates the cool-retro-term
+# profile in ../cool_retro_term.json. Loaded on its own (no default config).
+
+title = cmode
+# scripts/cmode replaces this with one that also says where the font file is
+command = /usr/bin/env CMODE=1 /bin/zsh -l
+
+# The font comes from a per-window file that scripts/cmode loads after this
+# one (and `cmode font` / :Font rewrites), from the fonts in `theme fonts`.
+font-thicken = false
+
+# Modus Vivendi deuteranopia (same colours as kitty-cmode)
+background = #000000
+foreground = #ffffff
+cursor-color = #ffffff
+cursor-text = #000000
+selection-background = #7030af
+selection-foreground = #ffffff
+palette = 0=#000000
+palette = 1=#ff5f59
+palette = 2=#44bc44
+palette = 3=#cabf00
+palette = 4=#2fafff
+palette = 5=#feacd0
+palette = 6=#00d3d0
+palette = 7=#a6a6a6
+palette = 8=#595959
+palette = 9=#ff6b55
+palette = 10=#00c06f
+palette = 11=#ffa00f
+palette = 12=#79a8ff
+palette = 13=#b6a0ff
+palette = 14=#6ae4b9
+palette = 15=#ffffff
+
+# the CRT pass; it never animates, so there's no constant redraw
+custom-shader = crt.glsl
+custom-shader-animation = false
+
+# cool-retro-term's margin (13px) plus its thin frame
+window-padding-x = 18
+window-padding-y = 18
+window-padding-balance = true
+macos-titlebar-style = hidden
+cursor-style = block
+cursor-style-blink = false
+shell-integration-features = no-cursor
+confirm-close-surface = false
+quit-after-last-window-closed = true
