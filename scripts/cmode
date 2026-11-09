@@ -15,5 +15,5 @@ dir="$(cd "${1:-.}" && pwd)"
 
 kitty="$(command -v kitty || echo /Applications/kitty.app/Contents/MacOS/kitty)"
 KITTY_CONFIG_DIRECTORY="$HOME/.config/kitty-cmode" nohup "$kitty" \
-  --title cmode --directory "$dir" "${font[@]}" >/dev/null 2>&1 &
+  --title cmode --directory "$dir" ${font[@]+"${font[@]}"} >/dev/null 2>&1 &
 disown
