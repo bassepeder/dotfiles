@@ -69,6 +69,10 @@ link "$DOTFILES/bat" ~/.config/bat
 link "$DOTFILES/theme" ~/.config/theme
 mkdir -p ~/.local/bin
 link "$DOTFILES/theme/theme" ~/.local/bin/theme
+# cmode: a stripped-down console for C (scripts/cmode)
+link "$DOTFILES/kitty-cmode" ~/.config/kitty-cmode
+link "$DOTFILES/nvim-c" ~/.config/nvim-c
+link "$DOTFILES/scripts/cmode" ~/.local/bin/cmode
 link "$DOTFILES/lazygit/config.yml" "$HOME/Library/Application Support/lazygit/config.yml"
 
 # C64 Pro Mono (for `theme font c64`) may not be redistributed, so it isn't in
