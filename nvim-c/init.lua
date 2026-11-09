@@ -516,7 +516,9 @@ local function fzf(title, run, fzf_args, picked)
   vim.cmd.startinsert()
 end
 
-local preview = "--preview 'bat --color=always --style=numbers {} 2>/dev/null || cat {}'"
+-- previews in the editor's own colours rather than the shared bat theme
+local bat = "bat --color=always --style=numbers --theme=modus-vivendi-deuteranopia"
+local preview = "--preview '" .. bat .. " {} 2>/dev/null || cat {}'"
 local function find_files()
   fzf("Files", "rg --files --hidden -g '!.git'", preview, function(file)
     vim.cmd.edit(vim.fn.fnameescape(file))
@@ -530,7 +532,7 @@ local function grep()
     "--disabled --ansi --delimiter :",
     "--bind " .. vim.fn.shellescape("start:reload:" .. rg),
     "--bind " .. vim.fn.shellescape("change:reload:" .. rg),
-    "--preview 'bat --color=always --style=numbers --highlight-line {2} {1}'",
+    "--preview '" .. bat .. " --highlight-line {2} {1}'",
     "--preview-window '+{2}/2'",
   }, " "), function(line)
     local file, lnum, col = line:match("^(.-):(%d+):(%d+):")
