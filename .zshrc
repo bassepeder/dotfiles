@@ -24,7 +24,8 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 zstyle ':completion::complete:*' gain-privileges 1
 
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-[ -f /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ] &&
+# not in cmode (scripts/cmode), which keeps the shell bare
+[ -z "$CMODE" ] && [ -f /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ] &&
   source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 
 [ -f /opt/homebrew/opt/fzf/shell/completion.zsh ] && source /opt/homebrew/opt/fzf/shell/completion.zsh
@@ -61,7 +62,20 @@ alias v="nvim"
 
 command -v fnm >/dev/null && eval "$(fnm env --use-on-cd)"
 export STARSHIP_CACHE="$HOME/.cache/starship"
-eval "$(starship init zsh)"
+if [ -n "$CMODE" ]; then
+  # cmode (scripts/cmode): plain BSD tools, a bare prompt, strict C99 builds
+  # (`make foo` builds foo.c with these via make's built-in rules) and nvim-c
+  unalias ls ll la lt cat 2>/dev/null
+  alias ll='ls -l' la='ls -la'
+  unset MANPAGER MANROFFOPT
+  export NVIM_APPNAME=nvim-c
+  export CC=cc
+  export CFLAGS='-std=c99 -Wall -Wextra -Wpedantic -g -O0 -fsanitize=address,undefined'
+  PROMPT='%(?..[%?] )%~ $ '
+  RPROMPT=''
+else
+  eval "$(starship init zsh)"
+fi
 
 bindkey -v
 

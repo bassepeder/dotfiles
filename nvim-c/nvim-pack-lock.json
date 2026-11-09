@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "modus-themes.nvim": {
+      "rev": "15ffb5ab6a12f72ee1e8393fe5810d5317da2d3e",
+      "src": "https://github.com/miikanissi/modus-themes.nvim"
+    }
+  }
+}
