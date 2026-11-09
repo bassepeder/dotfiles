@@ -2,115 +2,85 @@
 
 My macOS setup. yabai and skhd for tiling, JankyBorders, Neovim (LazyVim), kitty, zsh with starship, lazygit, delta and btop.
 
-Kitty, Neovim, delta, lazygit, bat and btop share one theme: Catppuccin (Latte/Mocha) or Modus (Operandi/Vivendi). It either follows the macOS appearance or stays light or dark. Kitty and Neovide also share one font: JetBrains Mono, Fira Code, Terminus or Commodore 64 (C64 Pro Mono).
+## Theme and font
 
-Switch them from Neovim with `:Theme` and `:Font`, which open pickers, or from a shell:
+Kitty, Neovim, delta, lazygit, bat and btop share one theme, Catppuccin or Modus. It follows the macOS appearance (Latte/Mocha, Operandi/Vivendi) unless I pin it to light or dark. Kitty and Neovide share a font as well.
+
+In Neovim it's `:Theme` and `:Font`. From a shell:
 
 ```bash
-theme set modus          # follow the system
+theme set modus            # follows the system
 theme set catppuccin dark
-theme font c64
-theme                    # show the current setting
+theme font c64             # jetbrains, fira, terminus or c64
+theme                      # what's set right now
 ```
 
-`theme/theme` keeps the state in `theme/state` and writes the per-tool files (`kitty/*.auto.conf`, `kitty/font.conf`, `bat/config`, `theme/delta.gitconfig`). All of them are gitignored and `install.sh` generates them. Running shells keep the old bat theme until they restart, because bat reads `~/.config/bat/config` and env vars override it.
+The state is in `theme/state`. `theme` writes what each tool reads (kitty's auto theme files and `font.conf`, `bat/config`, a delta include), all gitignored. Shells that were already open keep the old bat theme until they're restarted.
 
 ## cmode
 
-`cmode` opens a separate terminal window for writing C that feels like an old console. It has a bare prompt, plain tools, strict C99 builds and a small Neovim with no plugins. Nothing in it changes your normal setup.
+A separate terminal for writing C, set up like an old console: bare prompt, plain BSD tools, strict C99 builds and a small Neovim config without plugins (`nvim-c/`). It doesn't touch the normal setup.
 
 <table>
   <tr>
-    <td><img src="screenshots/cmode-ghostty.png" alt="cmode in Ghostty: nvim-c with a C file and its -O2 assembly side by side, Emacs-style mode lines at the bottom"></td>
-    <td><img src="screenshots/cmode-c64.png" alt="cmode --c64: the same C file in the Commodore 64 font"></td>
+    <td><img src="screenshots/cmode-ghostty.png" alt="cmode in Ghostty: nvim-c with a C file and its -O2 assembly side by side"></td>
+    <td><img src="screenshots/cmode-c64.png" alt="cmode --c64: the same file in the Commodore 64 font"></td>
   </tr>
   <tr>
-    <td align="center"><code>cmode</code>: nvim-c with <code>:Asm</code></td>
+    <td align="center"><code>cmode</code> with <code>:Asm</code></td>
     <td align="center"><code>cmode --c64</code></td>
   </tr>
 </table>
 
-<img src="screenshots/cmode-kitty.png" alt="cmode --kitty: a bare prompt building and running a brainfuck interpreter, then [1] in front of the prompt after a failed command">
-
-<p align="center"><code>cmode --kitty</code>: <code>make</code> with the strict C99 flags, and a failed command's exit code in the prompt</p>
+<img src="screenshots/cmode-kitty.png" alt="cmode --kitty: building and running a brainfuck interpreter, with the exit code in the prompt after a failed command">
 
 <details>
-<summary><b>Usage, options and the nvim-c keybindings</b></summary>
-
-### Usage
+<summary>Usage and keys</summary>
 
 ```bash
-cmode                 # Ghostty, in the current directory
-cmode --kitty ~/src   # kitty, starting in ~/src
-cmode --c64           # the Commodore 64 font
+cmode                # Ghostty, in the current directory
+cmode ~/src/kilo     # somewhere else
+cmode --kitty        # kitty instead of Ghostty
+cmode --c64          # Commodore 64 font
 ```
 
-| Option | What it does |
+Ghostty is the default. It runs the screen through `ghostty-cmode/crt.glsl`, which is my cool-retro-term profile (`cool_retro_term.json`) redone as a shader. `--kitty` is the same thing without the CRT effect. Both use Modus Vivendi, the deuteranopia variant, on black.
+
+The font starts out as whatever `theme font` is. `:Font` in nvim-c, or `cmode font <id>` in the shell, changes it for that window only.
+
+The prompt is just the directory, with the exit code in front when something fails (`[134] ~/src/kilo $`). `CFLAGS` is `-std=c99 -Wall -Wextra -Wpedantic -g -O0 -fsanitize=address,undefined`, so `make foo` builds `foo.c` without a Makefile. In projects with a Makefile, run `bear -- make` once so clangd sees the real flags.
+
+### nvim-c
+
+Leader is Space. `?` shows these inside Neovim.
+
+| Key | |
 |---|---|
-| `--ghostty` | Ghostty with a CRT pass (`ghostty-cmode/crt.glsl`) that recreates the cool-retro-term profile in `cool_retro_term.json`: colours at half strength, a dark frame with rounded corners. This is the default. |
-| `--kitty` | kitty, plain and sharp, with no CRT effect. |
-| `--c64` | The Commodore 64 font (C64 Pro Mono) instead of your usual one. |
-| `dir` | Where the window starts. Defaults to the current directory. |
-| `-h`, `--help` | Show the usage. |
+| `Space m` | build: `make`, or `make <file>` when there's no Makefile. Problems go to the quickfix list (`]q` `[q`) |
+| `Space r` | run `./<file>` in a terminal split |
+| `Space d` | debug it in lldb |
+| `Space a` | the file's `-O2` assembly next to it |
+| `K` | man page, libc first |
+| `gd` `ge` | definition (`Ctrl-o` goes back) |
+| `gD` `gE` | declaration |
+| `gI` | implementation |
+| `gy` | type definition |
+| `gn` `grr` | references |
+| `grn` | rename |
+| `gK` `gh` | hover |
+| `]d` `[d` | next/previous diagnostic, `Ctrl-w d` shows it |
+| `Ctrl-x Ctrl-o` | completion, which never pops up by itself |
+| `Space Space` `Space f` | find files |
+| `Space /` | grep the project |
+| `Space ,` `Space b` | open buffers |
+| `-` | file browser |
+| `Esc Esc` | leave a terminal split |
+| `:Hex` | hex view (open binaries with `nvim -b`) |
+| `:Font` | this window's font |
 
-Both terminals use Modus Vivendi (the deuteranopia variant, which uses yellow and blue instead of red and green) on black, whatever the shared theme is.
+The g-keys are the same ones as in my main Neovim config. The finders are fzf in a floating terminal, so the colour theme is the only plugin.
 
-### Fonts
-
-A cmode window starts in your usual font (`theme font`), or C64 with `--c64`. Every window has its own font file, so changing the font affects only that window:
-
-- `:Font` in nvim-c opens a picker, and `:Font c64` switches directly.
-- `cmode font <id>` does the same from the window's shell. `cmode font` alone shows the current font.
-
-The ids are the ones in `theme fonts`: `jetbrains`, `fira`, `terminus` and `c64`.
-
-### Inside the window
-
-- **Prompt:** just `~/src/kilo $`. A failing command's exit code appears in front, e.g. `[134] ~/src/kilo $` when AddressSanitizer aborts.
-- **Shell:** no starship, no autosuggestions, and plain BSD `ls`, `cat` and `man`.
-- **Builds:** `CFLAGS='-std=c99 -Wall -Wextra -Wpedantic -g -O0 -fsanitize=address,undefined'`, so `make foo` builds `foo.c` without a Makefile.
-- **Editor:** `nvim` runs `nvim-c/`. clangd uses C99 flags unless the project has a `compile_commands.json`. For a Makefile project, run `bear -- make` once to create it.
-
-### nvim-c keybindings
-
-The leader key is <kbd>Space</kbd>.
-
-| Key / command | What it does |
-|---|---|
-| <kbd>Space</kbd> <kbd>m</kbd> | Build. Runs `make` if there's a Makefile, else `make <file>`. Errors and warnings open the quickfix list. |
-| <kbd>Space</kbd> <kbd>r</kbd> / `:Run [cmd]` | Run `./<file>` (or `cmd`) in a terminal split. |
-| <kbd>Space</kbd> <kbd>d</kbd> / `:Debug [prog]` | Debug `./<file>` (or `prog`) with lldb in a terminal split. |
-| <kbd>Space</kbd> <kbd>a</kbd> / `:Asm` | Show the file's `-O2` assembly in a split. |
-| `:Hex` | Toggle a hex view of the buffer. Open binaries with `nvim -b`. |
-| `:Font [id]` | Switch this window's font. Without an id it opens a picker. |
-| <kbd>K</kbd> | Man page for the word under the cursor, libc (section 3) first. |
-| <kbd>g</kbd> <kbd>K</kbd> | clangd hover. |
-| <kbd>Ctrl</kbd>+<kbd>]</kbd> | Go to the definition. |
-| <kbd>g</kbd> <kbd>r</kbd> <kbd>r</kbd> / <kbd>g</kbd> <kbd>r</kbd> <kbd>n</kbd> | References / rename (Neovim defaults). |
-| <kbd>]</kbd> <kbd>d</kbd> / <kbd>[</kbd> <kbd>d</kbd> | Next / previous diagnostic. <kbd>Ctrl</kbd>+<kbd>w</kbd> <kbd>d</kbd> shows the message. |
-| <kbd>Ctrl</kbd>+<kbd>x</kbd> <kbd>Ctrl</kbd>+<kbd>o</kbd> | Completion, only when you ask for it. |
-| <kbd>Space</kbd> <kbd>f</kbd> | `:find`, which searches the whole tree. |
-| <kbd>Space</kbd> <kbd>b</kbd> | List the buffers and pick one. |
-| <kbd>-</kbd> | File browser (netrw). |
-| <kbd>Esc</kbd> <kbd>Esc</kbd> | Leave terminal mode in a terminal split. |
-
-Indentation follows each file (tabs stay tabs, 2/4/8 spaces stay as they are), an `.editorconfig` wins, and new files get 2 spaces. Tabs show as `»` and trailing spaces as `·`.
-
-The statusline is an Emacs-style mode line:
-
-```
--UU-:**-  F1  bf.c          62% L218   (C E1 W2) --------------------------
-```
-
-| Part | Meaning |
-|---|---|
-| `UU` | The file is UTF-8 (`--` if not). |
-| `:` | Unix line endings (`\` for DOS, `/` for old Mac). |
-| `**` | The buffer is modified. `%%` means read-only, `--` neither. |
-| `F1` | The tab page, like Emacs' frame number. |
-| `62%` | How far down the window starts: `Top`, `Bot` or `All` when an end is visible. |
-| `L218` | The cursor line. |
-| `(C E1 W2)` | The filetype, then clangd's error and warning counts. Buffers that aren't files are named Emacs-style, e.g. `*asm bf.c*` or `*man printf(3)*`. |
+Indentation follows the file or its `.editorconfig`, and new files get 2 spaces. Anything past column 80 is highlighted. The statusline is an Emacs mode line, `-UU-:**-  F1  bf.c  62% L218  (C E1 W2)`: `**` is modified (`%%` read-only), then the tab number, file, position, line, and the filetype with clangd's error and warning counts.
 
 </details>
 
@@ -123,7 +93,7 @@ brew bundle
 ./install.sh
 ```
 
-`install.sh` symlinks the configs into place and checks that yabai and skhd still have their macOS permissions.
+`install.sh` symlinks the configs into place and checks that yabai and skhd still have their macOS permissions. It also downloads C64 Pro Mono, since that font can't be redistributed.
 
 yabai isn't in the Brewfile. I run my own fork with fixes for macOS 27, see `yabai/README.md`.
 

@@ -9,9 +9,12 @@
 --   :Hex        toggle a hex view of the buffer (open binaries with `nvim -b`)
 --   :Font [id]  switch this cmode window's font (a picker without an id)
 --   K           man page (section 3 first, so libc)
---   gK          clangd hover;  <C-]> definition;  grr references;  grn rename
+--   gd ge       definition;  gD gE declaration;  gI implementation;  gy type definition
+--   gn grr      references;  grn rename;  gK gh hover   (the main config's keys)
 --   ]d [d       next/previous diagnostic;  <C-w>d  show it
---   <leader>f   :find (searches the tree);  <leader>b  pick a buffer;  -  file browser
+--   <leader><space> <leader>f   fuzzy-find files (fzf);  <leader>/  grep
+--   <leader>, <leader>b         open buffers;  -  file browser
+--   ?           this list as a cheat sheet in a popup   (:Keys)
 
 vim.g.mapleader = " "
 vim.g.c_syntax_for_h = 1 -- .h is C, not C++
@@ -201,6 +204,24 @@ map("n", "K", function()
 end, { desc = "man page" })
 map("n", "gK", vim.lsp.buf.hover, { desc = "clangd hover" })
 
+-- the same go-to keys as the main config (LazyVim's plus its own ge/gE/gn/gh);
+-- with several results they open in the quickfix list
+local lsp = vim.lsp.buf
+for keys, def in pairs({
+  gd = { lsp.definition, "definition" },
+  ge = { lsp.definition, "definition" },
+  gD = { lsp.declaration, "declaration" },
+  gE = { lsp.declaration, "declaration" },
+  gI = { lsp.implementation, "implementation" },
+  gy = { lsp.type_definition, "type definition" },
+  gn = { lsp.references, "references" },
+  gh = { lsp.hover, "hover" },
+}) do
+  map("n", keys, function()
+    def[1]()
+  end, { desc = def[2] })
+end
+
 -- build: a Makefile if there is one, else make's built-in rule for this file,
 -- which compiles foo.c into foo with $CC and $CFLAGS
 local function target()
@@ -340,8 +361,164 @@ end, {
   end,
 })
 
-map("n", "<leader>f", ":find ", { desc = "find file" })
-map("n", "<leader>b", ":ls<cr>:b ", { desc = "buffer" })
+-- ? : a cheat sheet in a popup, since there's no which-key here
+local cheatsheet = {
+  "",
+  " Space is the leader: press Space, then the key.",
+  "",
+  " BUILD AND RUN",
+  "   Space m     build (make, or make <file>); problems open a list",
+  "   ]q  [q      next / previous entry in that list",
+  "   Space r     run ./<file> in a terminal        (:Run [cmd])",
+  "   Space d     debug ./<file> with lldb          (:Debug [prog])",
+  "   Space a     the file's assembly, side by side  (:Asm)",
+  "   Esc Esc     leave a terminal split; :q closes it",
+  "",
+  " READING CODE",
+  "   K           man page for the word (libc first)",
+  "   gK  gh      clangd: type, signature, docs",
+  "   gd  ge      go to the definition    Ctrl-o  jump back",
+  "   gD  gE      declaration             gI      implementation",
+  "   gy          type definition         gn grr  list its uses",
+  "   grn         rename it everywhere",
+  "",
+  " PROBLEMS",
+  "   ]d  [d      next / previous error or warning",
+  "   Ctrl-w d    show the message under the cursor",
+  "",
+  " TYPING",
+  "   Ctrl-x Ctrl-o   completion; Ctrl-n / Ctrl-p to move",
+  "",
+  " FINDING (fzf: type to filter, Enter opens, Esc cancels)",
+  "   Space Space  files     (or Space f)",
+  "   Space /      grep the project as you type",
+  "   Space ,      open buffers   (or Space b)",
+  "   -            file browser (Enter opens, - goes up)",
+  "",
+  " COMMANDS",
+  "   :Font [id]  this window's font      :Hex  hex view",
+  "",
+  " q, Esc or ? closes this. Search backwards with / and then N.",
+  "",
+}
+local function show_keys()
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, cheatsheet)
+  vim.bo[buf].modifiable = false
+  vim.bo[buf].bufhidden = "wipe"
+  local ns = vim.api.nvim_create_namespace("nvim_c_keys")
+  for i, line in ipairs(cheatsheet) do
+    if line:match("^ %u%u+") then -- the section headings
+      vim.hl.range(buf, ns, "Title", { i - 1, 0 }, { i - 1, #line })
+    end
+  end
+  local width = 2
+  for _, line in ipairs(cheatsheet) do
+    width = math.max(width, vim.fn.strdisplaywidth(line) + 1)
+  end
+  width = math.min(width, vim.o.columns - 4)
+  local height = math.min(#cheatsheet, vim.o.lines - 4)
+  vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    width = width,
+    height = height,
+    row = math.floor((vim.o.lines - height) / 2) - 1,
+    col = math.floor((vim.o.columns - width) / 2),
+    style = "minimal",
+    border = "single",
+    title = " nvim-c keys ",
+    title_pos = "center",
+  })
+  for _, key in ipairs({ "q", "<esc>", "?" }) do
+    vim.keymap.set("n", key, "<cmd>close<cr>", { buffer = buf, nowait = true })
+  end
+end
+vim.api.nvim_create_user_command("Keys", show_keys, {})
+map("n", "?", show_keys, { desc = "cheat sheet" })
+
+-- Fuzzy finding with the fzf command in a floating terminal, no plugin.
+-- run: the shell command fzf reads from; picked(line) gets the chosen line.
+local function fzf(title, run, fzf_args, picked)
+  local out = vim.fn.tempname()
+  local width = math.floor(vim.o.columns * 0.85)
+  local height = math.floor(vim.o.lines * 0.75)
+  local buf = vim.api.nvim_create_buf(false, true)
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    width = width,
+    height = height,
+    row = math.floor((vim.o.lines - height) / 2) - 1,
+    col = math.floor((vim.o.columns - width) / 2),
+    style = "minimal",
+    border = "single",
+    title = " " .. title .. " ",
+    title_pos = "center",
+  })
+  -- a single Esc goes straight to fzf (which cancels), not to the <esc><esc> map
+  vim.keymap.set("t", "<esc>", "<esc>", { buffer = buf, nowait = true })
+  vim.fn.jobstart(run .. " | fzf " .. fzf_args .. " > " .. vim.fn.shellescape(out), {
+    term = true,
+    on_exit = function(_, code)
+      vim.schedule(function()
+        if vim.api.nvim_win_is_valid(win) then
+          vim.api.nvim_win_close(win, true)
+        end
+        local choice = code == 0 and vim.fn.filereadable(out) == 1 and vim.fn.readfile(out)[1]
+        os.remove(out)
+        if choice and choice ~= "" then
+          picked(choice)
+        end
+      end)
+    end,
+  })
+  vim.cmd.startinsert()
+end
+
+local preview = "--preview 'bat --color=always --style=numbers {} 2>/dev/null || cat {}'"
+local function find_files()
+  fzf("Files", "rg --files --hidden -g '!.git'", preview, function(file)
+    vim.cmd.edit(vim.fn.fnameescape(file))
+  end)
+end
+
+-- search the project as you type; rg runs again on every keystroke
+local function grep()
+  local rg = "rg --column --line-number --no-heading --color=always --smart-case -- {q} || true"
+  fzf("Grep", ":", table.concat({
+    "--disabled --ansi --delimiter :",
+    "--bind " .. vim.fn.shellescape("start:reload:" .. rg),
+    "--bind " .. vim.fn.shellescape("change:reload:" .. rg),
+    "--preview 'bat --color=always --style=numbers --highlight-line {2} {1}'",
+    "--preview-window '+{2}/2'",
+  }, " "), function(line)
+    local file, lnum, col = line:match("^(.-):(%d+):(%d+):")
+    if file then
+      vim.cmd.edit(vim.fn.fnameescape(file))
+      vim.api.nvim_win_set_cursor(0, { tonumber(lnum), tonumber(col) - 1 })
+    end
+  end)
+end
+
+local function buffers()
+  local names = {}
+  for _, b in ipairs(vim.fn.getbufinfo({ buflisted = 1 })) do
+    if b.name ~= "" then
+      names[#names + 1] = vim.fn.fnamemodify(b.name, ":.")
+    end
+  end
+  local list = vim.fn.tempname()
+  vim.fn.writefile(names, list)
+  fzf("Buffers", "cat " .. vim.fn.shellescape(list), preview, function(name)
+    os.remove(list)
+    vim.cmd.buffer(vim.fn.fnameescape(name))
+  end)
+end
+
+map("n", "<leader><space>", find_files, { desc = "find file" })
+map("n", "<leader>f", find_files, { desc = "find file" })
+map("n", "<leader>/", grep, { desc = "grep" })
+map("n", "<leader>,", buffers, { desc = "buffers" })
+map("n", "<leader>b", buffers, { desc = "buffers" })
 map("n", "-", "<cmd>Explore<cr>", { desc = "file browser" })
 map("n", "<esc>", "<cmd>nohlsearch<cr>")
 map("t", "<esc><esc>", "<c-\\><c-n>")
