@@ -47,3 +47,10 @@ cursor-style-blink = false
 shell-integration-features = no-cursor
 confirm-close-surface = false
 quit-after-last-window-closed = true
+
+# move between panes with Cmd-h/j/k/l, like the main kitty config (these
+# replace Ghostty's Cmd-K clear screen and Cmd-J scroll to selection)
+keybind = super+h=goto_split:left
+keybind = super+j=goto_split:down
+keybind = super+k=goto_split:up
+keybind = super+l=goto_split:right
