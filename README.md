@@ -19,6 +19,21 @@ theme                    # show the current setting
 
 `cmode` opens a separate terminal window for writing C that feels like an old console. It has a bare prompt, plain tools, strict C99 builds and a small Neovim with no plugins. Nothing in it changes your normal setup.
 
+<table>
+  <tr>
+    <td><img src="screenshots/cmode-ghostty.png" alt="cmode in Ghostty: nvim-c with a C file and its -O2 assembly side by side, Emacs-style mode lines at the bottom"></td>
+    <td><img src="screenshots/cmode-c64.png" alt="cmode --c64: the same C file in the Commodore 64 font"></td>
+  </tr>
+  <tr>
+    <td align="center"><code>cmode</code>: nvim-c with <code>:Asm</code></td>
+    <td align="center"><code>cmode --c64</code></td>
+  </tr>
+</table>
+
+<img src="screenshots/cmode-kitty.png" alt="cmode --kitty: a bare prompt building and running a brainfuck interpreter, then [1] in front of the prompt after a failed command">
+
+<p align="center"><code>cmode --kitty</code>: <code>make</code> with the strict C99 flags, and a failed command's exit code in the prompt</p>
+
 <details>
 <summary><b>Usage, options and the nvim-c keybindings</b></summary>
 
@@ -80,6 +95,22 @@ The leader key is <kbd>Space</kbd>.
 | <kbd>Esc</kbd> <kbd>Esc</kbd> | Leave terminal mode in a terminal split. |
 
 Indentation follows each file (tabs stay tabs, 2/4/8 spaces stay as they are), an `.editorconfig` wins, and new files get 2 spaces. Tabs show as `»` and trailing spaces as `·`.
+
+The statusline is an Emacs-style mode line:
+
+```
+-UU-:**-  F1  bf.c          62% L218   (C E1 W2) --------------------------
+```
+
+| Part | Meaning |
+|---|---|
+| `UU` | The file is UTF-8 (`--` if not). |
+| `:` | Unix line endings (`\` for DOS, `/` for old Mac). |
+| `**` | The buffer is modified. `%%` means read-only, `--` neither. |
+| `F1` | The tab page, like Emacs' frame number. |
+| `62%` | How far down the window starts: `Top`, `Bot` or `All` when an end is visible. |
+| `L218` | The cursor line. |
+| `(C E1 W2)` | The filetype, then clangd's error and warning counts. Buffers that aren't files are named Emacs-style, e.g. `*asm bf.c*` or `*man printf(3)*`. |
 
 </details>
 

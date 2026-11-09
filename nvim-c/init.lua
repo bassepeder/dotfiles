@@ -94,16 +94,61 @@ vim.api.nvim_create_autocmd("BufReadPost", {
   end,
 })
 
--- file:line:col and diagnostic counts, nothing else
-function _G.cmode_status()
-  local counts = vim.diagnostic.count(0)
-  local e = counts[vim.diagnostic.severity.ERROR] or 0
-  local w = counts[vim.diagnostic.severity.WARN] or 0
-  local diag = (e > 0 and ("E" .. e .. " ") or "") .. (w > 0 and ("W" .. w .. " ") or "")
-  return diag
+-- An Emacs mode line:  -UU-:**-  F1  bf.c          62% L218   (C E1 W2) ------
+--   UU    the file is UTF-8 (-- otherwise)      :   Unix line endings (\ DOS, / Mac)
+--   **    modified, %% read-only, -- neither    F1  the tab page, like Emacs' frame
+--   62%   how far down the window starts (Top, Bot or All when it shows the ends)
+--   (C)   the filetype, then clangd's error and warning counts
+local mode_names = { c = "C", cpp = "C++", objc = "ObjC", asm = "Asm", make = "Makefile", man = "Man",
+  qf = "Quickfix", netrw = "Dired", sh = "Shell-script", [""] = "Fundamental" }
+function _G.cmode_modeline()
+  local win = vim.g.statusline_winid
+  local buf = vim.api.nvim_win_get_buf(win)
+  local bo = vim.bo[buf]
+  local enc = (bo.fileencoding == "" or bo.fileencoding == "utf-8") and "UU" or "--"
+  local eol = ({ unix = ":", dos = "\\", mac = "/" })[bo.fileformat] or ":"
+  local flags = bo.readonly and (bo.modified and "%*" or "%%") or (bo.modified and "**" or "--")
+
+  local top, bot, last = vim.fn.line("w0", win), vim.fn.line("w$", win), vim.fn.line("$", win)
+  local pos = (top == 1 and bot == last) and "All"
+    or top == 1 and "Top"
+    or bot == last and "Bot"
+    or (math.floor((top - 1) * 100 / last) .. "%")
+
+  local mode = bo.buftype == "terminal" and "Term"
+    or mode_names[bo.filetype]
+    or (bo.filetype:gsub("^%l", string.upper))
+  local counts = vim.diagnostic.count(buf)
+  for _, d in ipairs({ { "E", vim.diagnostic.severity.ERROR }, { "W", vim.diagnostic.severity.WARN } }) do
+    if (counts[d[2]] or 0) > 0 then
+      mode = mode .. " " .. d[1] .. counts[d[2]]
+    end
+  end
+
+  -- files by their name; other buffers Emacs-style: *asm bf.c*, *man printf(3)*
+  local full = vim.api.nvim_buf_get_name(buf)
+  local name
+  if bo.buftype == "terminal" then
+    name = "*terminal*"
+  elseif bo.buftype == "quickfix" then
+    name = "*Quickfix*"
+  elseif bo.buftype ~= "" and full:match("^%w+://") then
+    name = "*" .. full:gsub("^(%w+)://", "%1 ") .. "*"
+  elseif full == "" then
+    name = "*scratch*"
+  else
+    name = vim.fn.fnamemodify(full, ":t")
+  end
+  local line = string.format("-%s-%s%s-  F%d  %-13s %4s L%%l   (%s) ", enc, eol, flags,
+    vim.fn.tabpagenr(), name, pos, mode)
+  -- a literal % in the result has to be %% for the statusline; %l stays an item
+  return (line:gsub("%%", "%%%%"):gsub("%%%%l", "%%l")) .. "%="
 end
 o.laststatus = 2
-o.statusline = " %f %m%r%=%{v:lua.cmode_status()}%l:%c "
+o.statusline = "%!v:lua.cmode_modeline()"
+vim.g.qf_disable_statusline = 1 -- the quickfix window gets the mode line too
+-- the dashes that run out to the right, like Emacs
+o.fillchars:append({ stl = "-", stlnc = "-" })
 
 vim.diagnostic.config({
   virtual_text = false,
@@ -215,6 +260,7 @@ vim.api.nvim_create_user_command("Asm", function()
     vim.api.nvim_win_set_buf(0, buf)
     vim.wo.wrap = false
     vim.wo.colorcolumn = ""
+    vim.wo.list = false -- the assembler's tabs aren't worth flagging
     vim.cmd("wincmd p")
   end
 end, {})
