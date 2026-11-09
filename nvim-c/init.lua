@@ -38,13 +38,14 @@ o.signcolumn = "yes:1"
 o.path = { ".", "**" }
 o.wildignore:append({ "*.o", "*.a", "*.dSYM/*", ".git/*" })
 o.shortmess:append("I")
--- Modus Vivendi, black like the cmode terminal, upright text, and Vim's
+-- Modus Vivendi (deuteranopia), black like the cmode terminal, upright text, and Vim's
 -- classic regex syntax highlighting. The one plugin, via Neovim's built-in vim.pack.
 o.termguicolors = true
 o.background = "dark"
 vim.pack.add({ "https://github.com/miikanissi/modus-themes.nvim" }, { confirm = false })
 require("modus-themes").setup({
   style = "modus_vivendi",
+  variants = { modus_vivendi = "deuteranopia" }, -- yellow/blue instead of red/green
   styles = { comments = { italic = false }, keywords = { italic = false } },
 })
 vim.cmd.colorscheme("modus_vivendi")
