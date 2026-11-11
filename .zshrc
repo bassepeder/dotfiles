@@ -12,11 +12,15 @@ HISTSIZE=100000
 SAVEHIST=100000
 setopt HIST_EXPIRE_DUPS_FIRST
 setopt HIST_IGNORE_DUPS
+# a leading space keeps a command (e.g. one with a token) out of history
+setopt HIST_IGNORE_SPACE
 setopt HIST_VERIFY
 setopt SHARE_HISTORY
 
 setopt AUTO_CD
 
+# Docker Desktop's CLI completions; before compinit so it only runs once
+[ -d ~/.docker/completions ] && fpath=(~/.docker/completions $fpath)
 autoload -Uz compinit
 compinit
 
@@ -101,7 +105,7 @@ bindkey "^[[A" fzf-history-widget
 
 psg() { ps aux | grep "$@" }
 take() { mkdir -p "$1" && cd "$1" }
-generate-password() { strings /dev/urandom | grep -o '[[:alnum:]]' | head -n "$1" | tr -d '\n'; echo }
+generate-password() { LC_ALL=C tr -dc '[:alnum:]' </dev/urandom | head -c "${1:-32}"; echo }
 where-from() { realpath "$(which "$1")" }
 url-sha256() { curl -sL "$1" | shasum -a 256 | cut -d ' ' -f 1 | xxd -r -p | base64 }
 c() { printf "%s\n" "$@" | bc -l }

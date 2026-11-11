@@ -64,6 +64,7 @@ link "$DOTFILES/.zshrc" ~/.zshrc
 link "$DOTFILES/git/.gitconfig" ~/.gitconfig
 link "$DOTFILES/starship.toml" ~/.config/starship.toml
 link "$DOTFILES/kitty" ~/.config/kitty
+link "$DOTFILES/neovide" ~/.config/neovide
 link "$DOTFILES/btop" ~/.config/btop
 link "$DOTFILES/bat" ~/.config/bat
 link "$DOTFILES/theme" ~/.config/theme
