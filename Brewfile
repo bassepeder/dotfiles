@@ -26,6 +26,7 @@ brew "neovim"
 brew "lazygit"
 brew "btop"
 brew "git-delta"
+brew "git-lfs" # .gitconfig sets up the lfs filter as required
 brew "bear" # cmode: compile_commands.json for clangd from a plain Makefile build
 brew "rustup"
 brew "openjdk@21"
