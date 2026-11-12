@@ -38,8 +38,8 @@ o.signcolumn = "yes:1"
 o.path = { ".", "**" }
 o.wildignore:append({ "*.o", "*.a", "*.dSYM/*", ".git/*" })
 o.shortmess:append("I")
--- Modus Vivendi (deuteranopia), black like the cmode terminal, upright text, and Vim's
--- classic regex syntax highlighting. The one plugin, via Neovim's built-in vim.pack.
+-- Modus Vivendi (deuteranopia), black like the cmode terminal, upright text.
+-- The one plugin, via Neovim's built-in vim.pack.
 o.termguicolors = true
 o.background = "dark"
 vim.pack.add({ "https://github.com/miikanissi/modus-themes.nvim" }, { confirm = false })
@@ -49,6 +49,16 @@ require("modus-themes").setup({
   styles = { comments = { italic = false }, keywords = { italic = false } },
 })
 vim.cmd.colorscheme("modus_vivendi")
+
+-- Tree-sitter highlighting for C, like the main config: functions, calls,
+-- fields, parameters and macros get their own colours. Neovim ships the C
+-- parser, so no plugin. (:lua vim.treesitter.stop() for the classic look.)
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "c",
+  callback = function(args)
+    pcall(vim.treesitter.start, args.buf)
+  end,
+})
 
 -- The 80-column limit: no guide line, just the characters past column 80
 -- highlighted, in windows showing a file
