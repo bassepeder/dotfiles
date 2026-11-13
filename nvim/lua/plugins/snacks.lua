@@ -32,7 +32,6 @@ return {
               end
             end,
           },
-          files = { hidden = true },
           explorer = {
             include = { ".editorconfig", ".env", ".oxlintrc*", ".oxfmtrc*" },
             layout = {
