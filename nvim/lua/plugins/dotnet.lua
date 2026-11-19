@@ -121,12 +121,15 @@ end
 
 -- ,du: dap-ui on or off. Closes everything that's open (the bottom tray
 -- included), and opens only the sidebar while debugging .NET.
-local function toggle_dapui()
-  local dapui = require("dapui")
-  local open = vim.iter(vim.api.nvim_list_wins()):any(function(win)
+local function dapui_is_open()
+  return vim.iter(vim.api.nvim_list_wins()):any(function(win)
     return vim.bo[vim.api.nvim_win_get_buf(win)].filetype:match("^dapui_") ~= nil
   end)
-  if open then
+end
+
+local function toggle_dapui()
+  local dapui = require("dapui")
+  if dapui_is_open() then
     dapui.close()
   else
     dapui.open(is_dotnet(require("dap").session()) and { layout = 1 } or {})
@@ -184,13 +187,19 @@ local function setup_debug_output()
     end
   end
 
-  -- dap-ui stays closed for .NET (the log has the output); ,du opens its
-  -- sidebar (variables, breakpoints, stacks, watches), ,dr the REPL
+  -- dap-ui stays closed when a .NET session starts (the log has the output);
+  -- its sidebar (variables, breakpoints, stacks, watches) opens at the first
+  -- breakpoint hit. ,du toggles it, ,dr is the REPL.
   local ok, dapui = pcall(require, "dapui")
   if ok then
     dap.listeners.after.event_initialized["dapui_config"] = function(session)
       if not is_dotnet(session) then
         dapui.open({})
+      end
+    end
+    dap.listeners.after.event_stopped["dotnet-dapui"] = function(session, body)
+      if is_dotnet(session) and body.reason == "breakpoint" and not dapui_is_open() then
+        dapui.open({ layout = 1 })
       end
     end
   end
