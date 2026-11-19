@@ -703,8 +703,8 @@ local function fzf(title, run, fzf_args, picked)
   vim.cmd.startinsert()
 end
 
--- previews in the editor's own colours rather than the shared bat theme
-local bat = "bat --color=always --style=numbers --theme=modus-vivendi-deuteranopia"
+-- previews in the editor's Emacs colours (bat/themes/emacs.tmTheme), not the shared theme
+local bat = "bat --color=always --style=numbers --theme=emacs"
 local preview = "--preview '" .. bat .. " {} 2>/dev/null || cat {}'"
 local function find_files()
   fzf("Files", "rg --files --hidden -g '!.git'", preview, function(file)
