@@ -39,8 +39,8 @@ dap-ui stays closed when a debug session starts and opens its sidebar at the fir
 
 A separate terminal for writing C, set up like an old console: bare prompt, plain BSD tools, strict C99 builds and a small Neovim config without plugins (`nvim-c/`). It doesn't touch the normal setup.
 
-<p align="center"><img src="screenshots/cmode-c64.png" width="60%" alt="cmode --c64: nvim-c with a brainfuck interpreter in the Commodore 64 font and Emacs colours"></p>
-<p align="center"><code>cmode --c64</code></p>
+<p align="center"><img src="screenshots/cmode-c64.png" width="60%" alt="cmode: nvim-c with a brainfuck interpreter in the Commodore 64 font and Emacs colours"></p>
+<p align="center"><code>cmode</code></p>
 
 <details>
 <summary>Usage and keys</summary>
@@ -48,20 +48,19 @@ A separate terminal for writing C, set up like an old console: bare prompt, plai
 ```bash
 cmode                # Ghostty, in the current directory
 cmode ~/src/kilo     # somewhere else
-cmode --kitty        # kitty instead of Ghostty
-cmode --c64          # Commodore 64 font (Ghostty only)
 cmode --no-crt       # Ghostty without the CRT effect
+cmode --no-c64       # my usual font instead of the Commodore 64 one
 ```
 
-Ghostty is the default. It runs the screen through `ghostty-cmode/crt.glsl`, which is my cool-retro-term profile (`cool_retro_term.json`) redone as a shader. `--no-crt` turns the effect off, and `--kitty` is the same thing in kitty.
+It runs in Ghostty, with the screen going through `ghostty-cmode/crt.glsl`, which is my cool-retro-term profile (`cool_retro_term.json`) redone as a shader. `--no-crt` turns the effect off.
 
 nvim-c has Emacs-style colours on black (`nvim-c/colors/emacs.lua`): blue keywords, teal types and the names a declaration introduces, and everything else plain. The shell around it uses Modus Vivendi's terminal colours.
 
-`--c64` is Pet Me 64 2Y, the C64's 80-column characters, the same font cool-retro-term uses. At 16 pt each of its pixels lands on whole screen pixels, so it stays sharp, and bold and italic are off because faking them smears the pixels. kitty can't use it, since it only takes fonts marked as monospaced.
+The font is the Commodore 64 one: Pet Me 64 2Y, the C64's 80-column characters, the same font cool-retro-term uses. At 16 pt each of its pixels lands on whole screen pixels, so it stays sharp, and bold and italic are off because faking them smears the pixels. `--no-c64` starts with my usual font (`theme font`) instead.
 
-Panes work as in my kitty: `Cmd-D` / `Cmd-Shift-D` split (in kitty `Cmd-Enter`), and `Cmd-h/j/k/l` move between them. A new pane is a cmode shell too, handy for running a server next to the editor.
+Panes work as in my kitty: `Cmd-D` / `Cmd-Shift-D` split, and `Cmd-h/j/k/l` move between them. A new pane is a cmode shell too, handy for running a server next to the editor.
 
-The font starts out as whatever `theme font` is. `:Font` in nvim-c, or `cmode font <id>` in the shell, changes it for that window only.
+`:Font` in nvim-c, or `cmode font <id>` in the shell, changes a window's font, for that window only.
 
 The prompt is just the directory, with the exit code in front when something fails (`[134] ~/src/kilo $`). `CFLAGS` is `-std=c99 -Wall -Wextra -Wpedantic -g -O0 -fsanitize=address,undefined`, so `make foo` builds `foo.c` without a Makefile. In projects with a Makefile, run `bear -- make` once so clangd sees the real flags.
 

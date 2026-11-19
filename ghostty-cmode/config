@@ -9,7 +9,7 @@ command = /usr/bin/env CMODE=1 /bin/zsh -l
 # one (and `cmode font` / :Font rewrites), from the fonts in `theme fonts`.
 font-thicken = false
 
-# Modus Vivendi deuteranopia (same colours as kitty-cmode)
+# Modus Vivendi deuteranopia
 background = #000000
 foreground = #ffffff
 cursor-color = #ffffff

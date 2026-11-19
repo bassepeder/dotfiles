@@ -71,7 +71,6 @@ link "$DOTFILES/theme" ~/.config/theme
 mkdir -p ~/.local/bin
 link "$DOTFILES/theme/theme" ~/.local/bin/theme
 # cmode: a stripped-down console for C (scripts/cmode)
-link "$DOTFILES/kitty-cmode" ~/.config/kitty-cmode
 link "$DOTFILES/ghostty-cmode" ~/.config/ghostty-cmode
 link "$DOTFILES/nvim-c" ~/.config/nvim-c
 link "$DOTFILES/scripts/cmode" ~/.local/bin/cmode
