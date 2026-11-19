@@ -1,6 +1,6 @@
 # dotfiles
 
-My macOS setup. yabai and skhd for tiling, JankyBorders, Neovim (LazyVim), kitty, zsh with starship, lazygit, delta and btop.
+My macOS setup. yabai and skhd for tiling, JankyBorders, Neovim (LazyVim) and Neovide, kitty, zsh with starship, lazygit, delta and btop. Plus cmode, a separate terminal for writing C.
 
 ## Theme and font
 
@@ -17,9 +17,30 @@ theme                      # what's set right now
 
 The state is in `theme/state`. `theme` writes what each tool reads (kitty's auto theme files and `font.conf`, `bat/config`, a delta include), all gitignored. Shells that were already open keep the old bat theme until they're restarted.
 
+## Neovim
+
+LazyVim, with `,` as the leader. The languages I work in each get a menu of everything, like the one Metals has, so I don't have to remember commands.
+
+**.NET** (easy-dotnet): `,ne` or `,dm` opens the menu. The everyday things have their own keys:
+
+| Key | |
+|---|---|
+| `,nr` `,nd` `,nw` | run, debug or watch the startup project |
+| `,nb` | build the solution, problems in the quickfix list |
+| `,nt` | test runner |
+| `,ns` | stop the run or the debug session |
+| `,dl` | the log: a floating window with a tab for each run, watch and debug session. It stays after the program exits, and you get a notice when one fails while it's hidden |
+
+dap-ui stays closed when a debug session starts and opens its sidebar at the first breakpoint. `,du` toggles it.
+
+**Scala** (Metals): `,me` for the Metals commands, `,mc` to compile.
+
 ## cmode
 
 A separate terminal for writing C, set up like an old console: bare prompt, plain BSD tools, strict C99 builds and a small Neovim config without plugins (`nvim-c/`). It doesn't touch the normal setup.
+
+<p align="center"><img src="screenshots/cmode-c64.png" width="60%" alt="cmode --c64: nvim-c with a brainfuck interpreter in the Commodore 64 font and Emacs colours"></p>
+<p align="center"><code>cmode --c64</code></p>
 
 <details>
 <summary>Usage and keys</summary>
@@ -32,7 +53,11 @@ cmode --c64          # Commodore 64 font (Ghostty only)
 cmode --no-crt       # Ghostty without the CRT effect
 ```
 
-Ghostty is the default. It runs the screen through `ghostty-cmode/crt.glsl`, which is my cool-retro-term profile (`cool_retro_term.json`) redone as a shader. `--no-crt` turns the effect off, and `--kitty` is the same thing in kitty. Both use Modus Vivendi, the deuteranopia variant, on black.
+Ghostty is the default. It runs the screen through `ghostty-cmode/crt.glsl`, which is my cool-retro-term profile (`cool_retro_term.json`) redone as a shader. `--no-crt` turns the effect off, and `--kitty` is the same thing in kitty.
+
+nvim-c has Emacs-style colours on black (`nvim-c/colors/emacs.lua`): blue keywords, teal types and the names a declaration introduces, and everything else plain. The shell around it uses Modus Vivendi's terminal colours.
+
+`--c64` is Pet Me 64 2Y, the C64's 80-column characters, the same font cool-retro-term uses. At 16 pt each of its pixels lands on whole screen pixels, so it stays sharp, and bold and italic are off because faking them smears the pixels. kitty can't use it, since it only takes fonts marked as monospaced.
 
 Panes work as in my kitty: `Cmd-D` / `Cmd-Shift-D` split (in kitty `Cmd-Enter`), and `Cmd-h/j/k/l` move between them. A new pane is a cmode shell too, handy for running a server next to the editor.
 
@@ -77,9 +102,11 @@ Building and running are commands rather than keys:
 | `:Hex` | hex view (open binaries with `nvim -b`) |
 | `:Font` | this window's font |
 
-The g-keys are the same ones as in my main Neovim config. The finders are fzf in a floating terminal, so the colour theme is the only plugin.
+The finders are fzf in a floating terminal, with bat previews in the same colours, so nvim-c needs no plugins at all.
 
-`:w` formats C with clang-format (built into clangd), using the nearest `.clang-format`, so `~/.clang-format` unless the project has its own. While typing, indentation follows the file or its `.editorconfig`, and new files get 2 spaces. Anything past column 80 is highlighted. The statusline is an Emacs mode line, `-UU-:**-  F1  bf.c  62% L218  (C E1 W2)`: `**` is modified (`%%` read-only), then the tab number, file, position, line, and the filetype with clangd's error and warning counts.
+`:w` formats C with clang-format (built into clangd), using the nearest `.clang-format`, so `~/.clang-format` unless the project has its own. While typing, indentation follows the file or its `.editorconfig`, and new files get 2 spaces. Anything past column 80 is highlighted.
+
+The statusline is an Emacs mode line, `-UU-:**-  F1  bf.c  62% L218  (C E1 W2)`: `**` is modified (`%%` read-only), then the tab number, file, position, line, and the filetype with clangd's error and warning counts.
 
 </details>
 
