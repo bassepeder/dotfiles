@@ -138,5 +138,5 @@ export PATH="/opt/homebrew/opt/rustup/bin:$PATH"
 export JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
 
 # Homebrew's dotnet lives in libexec; global tool apphosts (e.g. easy-dotnet's server) need DOTNET_ROOT to find it
-export DOTNET_ROOT="/opt/homebrew/opt/dotnet/libexec"
+export DOTNET_ROOT="/opt/homebrew/opt/dotnet@10/libexec"
 export PATH="$PATH:$HOME/.dotnet/tools"
