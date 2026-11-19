@@ -38,21 +38,19 @@ o.signcolumn = "yes:1"
 o.path = { ".", "**" }
 o.wildignore:append({ "*.o", "*.a", "*.dSYM/*", ".git/*" })
 o.shortmess:append("I")
--- Modus Vivendi (deuteranopia), black like the cmode terminal, upright text.
--- The one plugin, via Neovim's built-in vim.pack.
+-- Emacs-style colours on black (colors/emacs.lua): few of them, as in Emacs'
+-- C mode. Plain line numbers with the current one boxed, and nothing past the
+-- end of the file.
 o.termguicolors = true
-o.background = "dark"
-vim.pack.add({ "https://github.com/miikanissi/modus-themes.nvim" }, { confirm = false })
-require("modus-themes").setup({
-  style = "modus_vivendi",
-  variants = { modus_vivendi = "deuteranopia" }, -- yellow/blue instead of red/green
-  styles = { comments = { italic = false }, keywords = { italic = false } },
-})
-vim.cmd.colorscheme("modus_vivendi")
+vim.cmd.colorscheme("emacs")
+o.cursorline = true
+o.cursorlineopt = "number"
+o.fillchars:append({ eob = " " })
 
--- Tree-sitter highlighting for C, like the main config: functions, calls,
--- fields, parameters and macros get their own colours. Neovim ships the C
--- parser, so no plugin. (:lua vim.treesitter.stop() for the classic look.)
+-- Tree-sitter highlighting for C: it knows which words are types (your own
+-- typedefs too) and which names a declaration introduces, which is what the
+-- Emacs colours need. Neovim ships the C parser, so no plugin.
+-- (:lua vim.treesitter.stop() for the classic regex highlighting.)
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "c",
   callback = function(args)
@@ -772,6 +770,7 @@ local function explorer()
     return -- the file is outside the tree
   end
   vim.wo.cursorline = true
+  vim.wo.cursorlineopt = "both" -- the whole line, unlike in files
   vim.fn.cursor(1, 1) -- the tree reopens where it was left; search from the top
   local parts = vim.split(file:sub(#cwd + 2), "/", { plain = true })
   for depth, part in ipairs(parts) do
