@@ -24,14 +24,23 @@ DOTFILES="$(dirname "$DIR")"
 STATE="$DIR/state"
 
 # id|label|kitty font_family|Neovide guifont (comma = fallbacks)|size|extra kitty lines (; separated)
-# C64 Pro Mono keeps PETSCII in the private use area where Nerd Font icons
-# live, so map that range back to the icons, and give its full-height glyphs
-# some room between lines.
+#
+# Extra lines are kitty config, plus "pixel" for bitmap-style fonts: no faked
+# bold or italic, which smear their pixels.
+#
+# c64 is Pet Me 64 2Y, the C64's 80-column font (as in cool-retro-term): its
+# 8x8 characters at double height, drawn on a grid of 16 units per em. Sizes
+# that are multiples of 8 pt put every one of those units on whole screen
+# pixels (2 at 16 pt on Retina, 1 on a 1x screen), so nothing gets blurred.
+# It keeps PETSCII in the private use area where Nerd Font icons live, so
+# that range maps back to the icons, and its full-height glyphs get some room
+# between lines. kitty can't use it: it only takes fonts flagged as
+# monospaced, which Pet Me isn't, so it falls back to Menlo.
 FONTS="\
 jetbrains|JetBrains Mono|family='JetBrainsMono Nerd Font Mono' style=Light variable_name=JetBrainsMonoNerdFontMono|JetBrainsMono Nerd Font Mono|13|
 fira|Fira Code|family='FiraCode Nerd Font Mono'|FiraCode Nerd Font Mono|13|
 terminus|Terminus|family='Terminess Nerd Font Mono'|Terminess Nerd Font Mono|15|
-c64|Commodore 64|family='C64 Pro Mono'|Symbols Nerd Font Mono,C64 Pro Mono|12|symbol_map U+E000-U+F8FF Symbols Nerd Font Mono;modify_font cell_height 125%"
+c64|Commodore 64|family='Pet Me 64 2Y'|Symbols Nerd Font Mono,Pet Me 64 2Y|16|symbol_map U+E000-U+F8FF Symbols Nerd Font Mono;modify_font cell_height 125%;pixel"
 
 family=catppuccin
 mode=system
@@ -83,14 +92,20 @@ font_field() { # id, field number -> field (fails for unknown ids)
 # A font's settings as kitty or Ghostty config lines. Both reset what another
 # font may have set before, so the lines can replace any earlier font.
 font_spec() { # id, kitty|ghostty
-  local family size extra name style
+  local family size extra name style pixel=false
   family="$(font_field "$1" 3)" || return 1
   size="$(font_field "$1" 5)"
   extra="$(font_field "$1" 6)"
+  tr ';' '\n' <<<"$extra" | grep -qx pixel && pixel=true
   case "$2" in
   kitty)
     printf 'font_family %s\nfont_size %s\nmodify_font cell_height 100%%\n' "$family" "$size"
-    tr ';' '\n' <<<"$extra" | sed '/^$/d'
+    if $pixel; then # bold and italic text in the regular face
+      printf '%s %s\n' bold_font "$family" italic_font "$family" bold_italic_font "$family"
+    else
+      printf '%s auto\n' bold_font italic_font bold_italic_font
+    fi
+    tr ';' '\n' <<<"$extra" | sed '/^$/d;/^pixel$/d'
     ;;
   ghostty)
     name="$(sed -E "s/.*family='([^']*)'.*/\1/" <<<"$family")"
@@ -98,6 +113,13 @@ font_spec() { # id, kitty|ghostty
     # font-family is a fallback list; "" clears it
     printf 'font-family = ""\nfont-family = %s\nfont-style = %s\nfont-size = %s\nadjust-cell-height = 0%%\n' \
       "$name" "${style:-default}" "$size"
+    if $pixel; then # bold and italic text in the regular face, never faked
+      printf 'font-style-%s = false\n' bold italic bold-italic
+      echo 'font-synthetic-style = false'
+    else
+      printf 'font-style-%s = default\n' bold italic bold-italic
+      echo 'font-synthetic-style = true'
+    fi
     tr ';' '\n' <<<"$extra" | sed -nE \
       -e 's/^symbol_map ([^ ]+) (.*)$/font-codepoint-map = \1=\2/p' \
       -e 's/^modify_font cell_height ([0-9]+)%$/adjust-cell-height = \1%/p' |
@@ -119,10 +141,7 @@ apply() {
   # kitty swaps between these on appearance changes
   echo "include $light.conf" >"$DOTFILES/kitty/light-theme.auto.conf"
   echo "include $dark.conf" >"$DOTFILES/kitty/dark-theme.auto.conf"
-  {
-    printf 'font_family %s\nfont_size %s\n' "$(font_field "$font" 3)" "$(font_field "$font" 5)"
-    font_field "$font" 6 | tr ';' '\n'
-  } >"$DOTFILES/kitty/font.conf"
+  font_spec "$font" kitty >"$DOTFILES/kitty/font.conf"
 
   # git/lazygit pick theme-light or theme-dark; each is an alias for a variant feature
   cat >"$DIR/delta.gitconfig" <<GIT

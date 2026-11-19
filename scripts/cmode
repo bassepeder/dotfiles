@@ -9,7 +9,8 @@
 #                profile in cool_retro_term.json (default)
 #   --kitty      kitty, plain and sharp
 #   --no-crt     Ghostty without the CRT pass (--crt turns it back on)
-#   --c64        the Commodore 64 font instead of your usual one (`theme font`)
+#   --c64        the Commodore 64 font instead of your usual one (`theme font`);
+#                Ghostty only, kitty can't use it
 #   dir          where to start; defaults to the current directory
 #
 # Fonts are the ones from `theme fonts`. Each window gets its own font file,

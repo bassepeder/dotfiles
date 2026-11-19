@@ -77,17 +77,18 @@ link "$DOTFILES/nvim-c" ~/.config/nvim-c
 link "$DOTFILES/scripts/cmode" ~/.local/bin/cmode
 link "$DOTFILES/lazygit/config.yml" "$HOME/Library/Application Support/lazygit/config.yml"
 
-# C64 Pro Mono (for `theme font c64`) may not be redistributed, so it isn't in
-# this repo or Homebrew; fetch it from the publisher when it's missing
-if ! ls ~/Library/Fonts/C64_Pro_Mono-STYLE.ttf >/dev/null 2>&1; then
+# Pet Me 64 2Y (for `theme font c64`, the C64's 80-column font, as in
+# cool-retro-term) isn't in Homebrew; fetch it from Kreative Software when
+# it's missing. Their server turns curl's own user agent away.
+if ! ls ~/Library/Fonts/PetMe642Y.ttf >/dev/null 2>&1; then
   tmp="$(mktemp -d)"
-  if curl -fsSL -o "$tmp/c64.zip" https://style64.org/file/C64_TrueType_v1.2.1-STYLE.zip &&
-    unzip -q -j "$tmp/c64.zip" 'C64_TrueType_v1.2.1-STYLE/fonts/C64_Pro_Mono-STYLE.ttf' -d "$tmp"; then
+  if curl -fsSL -A "Mozilla/5.0" -o "$tmp/petme.zip" https://www.kreativekorp.com/swdownload/fonts/retro/petme.zip &&
+    unzip -q -j "$tmp/petme.zip" PetMe642Y.ttf -d "$tmp"; then
     mkdir -p ~/Library/Fonts
-    cp "$tmp/C64_Pro_Mono-STYLE.ttf" ~/Library/Fonts/
-    echo "Installed C64 Pro Mono"
+    cp "$tmp/PetMe642Y.ttf" ~/Library/Fonts/
+    echo "Installed Pet Me 64 2Y"
   else
-    echo "⚠️  could not download C64 Pro Mono from style64.org"
+    echo "⚠️  could not download Pet Me from kreativekorp.com"
   fi
   rm -rf "$tmp"
 fi

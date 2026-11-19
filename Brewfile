@@ -41,4 +41,4 @@ cask "font-jetbrains-mono-nerd-font"
 cask "font-fira-code-nerd-font"
 cask "font-terminess-ttf-nerd-font" # Terminus
 cask "font-symbols-only-nerd-font" # icon fallback for fonts without Nerd glyphs
-# C64 Pro Mono has no cask (its license forbids redistribution); install.sh fetches it
+# Pet Me 64 2Y (the Commodore 64 font) has no cask; install.sh fetches it

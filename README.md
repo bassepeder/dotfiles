@@ -41,7 +41,7 @@ A separate terminal for writing C, set up like an old console: bare prompt, plai
 cmode                # Ghostty, in the current directory
 cmode ~/src/kilo     # somewhere else
 cmode --kitty        # kitty instead of Ghostty
-cmode --c64          # Commodore 64 font
+cmode --c64          # Commodore 64 font (Ghostty only)
 cmode --no-crt       # Ghostty without the CRT effect
 ```
 
@@ -105,7 +105,7 @@ brew bundle
 ./install.sh
 ```
 
-`install.sh` symlinks the configs into place and checks that yabai and skhd still have their macOS permissions. It also downloads C64 Pro Mono, since that font can't be redistributed.
+`install.sh` symlinks the configs into place and checks that yabai and skhd still have their macOS permissions. It also downloads the Commodore 64 font (Pet Me 64 2Y), which Homebrew doesn't have.
 
 yabai isn't in the Brewfile. I run my own fork with fixes for macOS 27, see `yabai/README.md`.
 
