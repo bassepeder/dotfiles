@@ -111,6 +111,28 @@ local function dotnet_menu()
   })
 end
 
+-- whether a debug session (or the one that started it) is easy-dotnet's
+local function is_dotnet(session)
+  while session and session.parent do
+    session = session.parent
+  end
+  return session ~= nil and session.config.type == "easy-dotnet"
+end
+
+-- ,du: dap-ui on or off. Closes everything that's open (the bottom tray
+-- included), and opens only the sidebar while debugging .NET.
+local function toggle_dapui()
+  local dapui = require("dapui")
+  local open = vim.iter(vim.api.nvim_list_wins()):any(function(win)
+    return vim.bo[vim.api.nvim_win_get_buf(win)].filetype:match("^dapui_") ~= nil
+  end)
+  if open then
+    dapui.close()
+  else
+    dapui.open(is_dotnet(require("dap").session()) and { layout = 1 } or {})
+  end
+end
+
 -- Debug output goes to a "debug" tab in easy-dotnet's panel (next to the run
 -- tabs) instead of dap-ui's console, which closes along with the session.
 local function setup_debug_output()
@@ -154,12 +176,22 @@ local function setup_debug_output()
     return tab.buf, manager.panel_win
   end
 
-  -- dap-ui: only the sidebar (variables, breakpoints, stacks, watches) for
-  -- .NET; the bottom tray would just hold an empty console. ,dr is the REPL.
+  -- easy-dotnet's debugger warns about its own Release-built startup hook on
+  -- every session; keep that out of the REPL
+  dap.defaults[adapter].on_output = function(_, body)
+    if body.category ~= "telemetry" and not body.output:find("EasyDotnet.StartupHook", 1, true) then
+      require("dap.repl").append(body.output, "$", { newline = false })
+    end
+  end
+
+  -- dap-ui stays closed for .NET (the log has the output); ,du opens its
+  -- sidebar (variables, breakpoints, stacks, watches), ,dr the REPL
   local ok, dapui = pcall(require, "dapui")
   if ok then
     dap.listeners.after.event_initialized["dapui_config"] = function(session)
-      dapui.open(session.config.type == adapter and { layout = 1 } or {})
+      if not is_dotnet(session) then
+        dapui.open({})
+      end
     end
   end
 end
@@ -450,6 +482,11 @@ return {
   {
     "mfussenegger/nvim-dap",
     keys = { { "<leader>dl", false } },
+  },
+
+  {
+    "rcarriga/nvim-dap-ui",
+    keys = { { "<leader>du", toggle_dapui, desc = "Dap UI" } },
   },
 
   {
