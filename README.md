@@ -21,9 +21,6 @@ The state is in `theme/state`. `theme` writes what each tool reads (kitty's auto
 
 A separate terminal for writing C, set up like an old console: bare prompt, plain BSD tools, strict C99 builds and a small Neovim config without plugins (`nvim-c/`). It doesn't touch the normal setup.
 
-<img src="screenshots/cmode-c64.png" alt="cmode --c64 in Ghostty: nvim-c with a C file and its -O2 assembly side by side, in the Commodore 64 font">
-<p align="center"><code>cmode --c64</code> with <code>:Asm</code></p>
-
 <details>
 <summary>Usage and keys</summary>
 
