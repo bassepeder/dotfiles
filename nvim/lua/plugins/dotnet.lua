@@ -1,9 +1,10 @@
--- .NET: easy-dotnet, with a Metals-style menu (,ne) and one output panel for
--- everything that runs. Runs, watches and debug sessions each get a tab in
--- easy-dotnet's panel (,no), which stays put after the program exits.
+-- .NET: easy-dotnet, with a Metals-style menu (,ne) and one floating log
+-- window for everything that runs. Runs, watches and debug sessions each get
+-- a tab in it (,dl), and their output stays after the program exits.
 --
 --   ,ne  menu        ,nr  run         ,nd  debug       ,nw  watch
---   ,nb  build       ,nt  tests       ,no  output      ,ns  stop
+--   ,nb  build       ,nt  tests       ,ns  stop        ,dl  log
+--   ,dm  menu (same as ,ne)
 
 -- The menu: section, label, what to run (`:Dotnet <args>` or a function), and
 -- a short explanation shown next to it.
@@ -31,7 +32,7 @@ local menu = {
   { "Project", "Add project to solution…", "solution add", "dotnet sln add" },
   { "Project", "Remove project from solution…", "solution remove", "dotnet sln remove" },
   { "Project", "Forget remembered choices", "reset", "pick the startup project and profile again" },
-  { "Output", "Show or hide output", "output", "run, watch and debug logs, one tab each" },
+  { "Log", "Show or hide the log", "output", "run, watch and debug output, one tab each (,dl)" },
 }
 
 local function output()
@@ -148,14 +149,9 @@ local function setup_debug_output()
         pcall(require("easy-dotnet.terminal.tabline").render)
       end,
     })
-    local code_win = vim.api.nvim_get_current_win()
     manager.set_active("debug")
     term.show()
-    local panel = manager.panel_win
-    if vim.api.nvim_win_is_valid(code_win) then
-      vim.api.nvim_set_current_win(code_win)
-    end
-    return tab.buf, panel
+    return tab.buf, manager.panel_win
   end
 
   -- dap-ui: only the sidebar (variables, breakpoints, stacks, watches) for
@@ -168,23 +164,242 @@ local function setup_debug_output()
   end
 end
 
--- Runs show the panel but leave the cursor in the code, instead of jumping
--- into the program's terminal in insert mode. Wraps easy-dotnet's handler
--- before its RPC client caches it.
-local function keep_focus_on_run()
+-- easy-dotnet drops you into a run's terminal in insert mode, where keys go to
+-- the program; stay in normal mode instead. Wraps its handler before its RPC
+-- client caches it.
+local function normal_mode_on_run()
   local name = "easy-dotnet.rpc.handlers.run_command_managed"
   local ok, original = pcall(require, name)
   if not ok or type(original) ~= "function" then
     return
   end
   package.loaded[name] = function(...)
-    local code_win = vim.api.nvim_get_current_win()
     original(...)
     vim.cmd("stopinsert")
-    if vim.api.nvim_win_is_valid(code_win) then
-      vim.api.nvim_set_current_win(code_win)
+  end
+end
+
+-- The log as a floating window instead of easy-dotnet's bottom split. Its
+-- show/hide/toggle are replaced, so runs, watches, debug sessions,
+-- :Dotnet terminal and its hide-on-breakpoint all use the float.
+local function setup_log_float()
+  local term = require("easy-dotnet.terminal")
+  local manager = require("easy-dotnet.terminal.manager")
+  local Tab = require("easy-dotnet.terminal.tab")
+  local tabline = require("easy-dotnet.terminal.tabline")
+
+  local function is_open()
+    return manager.panel_win and vim.api.nvim_win_is_valid(manager.panel_win)
+  end
+
+  local function geometry()
+    local width = math.floor(vim.o.columns * 0.8)
+    local height = math.floor(vim.o.lines * 0.7)
+    return {
+      relative = "editor",
+      width = width,
+      height = height,
+      row = math.floor((vim.o.lines - height) / 2) - 1,
+      col = math.floor((vim.o.columns - width) / 2),
+    }
+  end
+
+  -- what killed programs exit with: ,ns (hangup), Ctrl-C, the debugger
+  -- stopping it (kill), SIGTERM; anything else non-zero is a failure
+  local stopped = { [129] = true, [130] = true, [137] = true, [143] = true }
+
+  local function status(tab)
+    local code = tab.last_exit_code
+    if Tab.is_running(tab) then
+      return "running"
+    elseif code == nil then
+      return tab.last_status == "finished" and "finished" or "idle"
+    elseif code == 0 then
+      return "finished"
+    end
+    return stopped[code] and "stopped" or ("failed, exit code " .. code)
+  end
+
+  -- title: the tab shown and its state; footer: all tabs and the keys
+  local function decorate()
+    if not is_open() then
+      return
+    end
+    local active = manager.active_id and manager.get(manager.active_id)
+    local names = vim.tbl_map(function(tab)
+      return tab.id == manager.active_id and ("[" .. tab.label .. "]") or tab.label
+    end, manager.get_all())
+    pcall(vim.api.nvim_win_set_config, manager.panel_win, {
+      title = active and (" .NET log · %s · %s "):format(active.label, status(active)) or " .NET log ",
+      title_pos = "center",
+      footer = (" %s    Tab next · q hide · ,ns stop "):format(table.concat(names, "  ")),
+      footer_pos = "center",
+    })
+  end
+
+  local function cycle(dir)
+    local tabs = manager.get_all()
+    for i, tab in ipairs(tabs) do
+      if tab.id == manager.active_id and #tabs > 1 then
+        manager.set_active(tabs[(i - 1 + dir) % #tabs + 1].id)
+        return
+      end
     end
   end
+
+  local function map_keys(buf)
+    local function map(lhs, fn)
+      vim.keymap.set("n", lhs, fn, { buffer = buf, nowait = true })
+    end
+    map("q", term.hide)
+    map("<Esc>", term.hide)
+    map("<Tab>", function()
+      cycle(1)
+    end)
+    map("<S-Tab>", function()
+      cycle(-1)
+    end)
+  end
+
+  term.show = function()
+    if is_open() then
+      vim.api.nvim_set_current_win(manager.panel_win)
+      return
+    end
+    local ok, runner = pcall(require, "easy-dotnet.test-runner.render")
+    if ok and runner.win and vim.api.nvim_win_is_valid(runner.win) then
+      runner.hide()
+    end
+    if #manager.get_all() == 0 then
+      manager.active_id = manager.new_user_terminal().id
+    end
+    local active = manager.get(manager.active_id) or manager.get_all()[1]
+    manager.active_id = active.id
+    Tab.ensure_buf(active)
+    local config = vim.tbl_extend("force", geometry(), { border = "rounded", style = "minimal" })
+    local win = vim.api.nvim_open_win(active.buf, true, config)
+    manager.panel_win = win
+    vim.wo[win].winfixbuf = true
+    manager._on_tab_activated = function(tab)
+      map_keys(tab.buf)
+      decorate()
+    end
+    map_keys(active.buf)
+    vim.cmd("normal! G") -- follow the output
+    decorate()
+    vim.api.nvim_create_autocmd("WinClosed", {
+      pattern = tostring(win),
+      once = true,
+      callback = function()
+        manager.panel_win = nil
+      end,
+    })
+  end
+
+  term.hide = function()
+    if is_open() then
+      vim.api.nvim_win_close(manager.panel_win, false)
+    end
+  end
+
+  -- open and focused: hide; open behind another window: focus it; else show
+  term.toggle = function()
+    if is_open() and vim.api.nvim_get_current_win() == manager.panel_win then
+      term.hide()
+    else
+      term.show()
+    end
+  end
+
+  -- easy-dotnet re-renders its tabline whenever a tab starts or stops; keep
+  -- the float's title and footer up to date at the same moments
+  local render = tabline.render
+  tabline.render = function(...)
+    pcall(render, ...)
+    decorate()
+  end
+
+  local group = vim.api.nvim_create_augroup("dotnet-log", { clear = true })
+
+  vim.api.nvim_create_autocmd("VimResized", {
+    group = group,
+    callback = function()
+      if is_open() then
+        vim.api.nvim_win_set_config(manager.panel_win, geometry())
+      end
+    end,
+  })
+
+  -- going back to the code (a click, <C-w>, a breakpoint) hides the log, so
+  -- it never sits on top of what you're editing; ,dl brings it back
+  vim.api.nvim_create_autocmd("WinEnter", {
+    group = group,
+    callback = function()
+      if is_open() and vim.api.nvim_win_get_config(0).relative == "" then
+        vim.schedule(function()
+          if vim.api.nvim_get_current_win() ~= manager.panel_win then
+            term.hide()
+          end
+        end)
+      end
+    end,
+  })
+
+  -- the log opens before the program starts; put the cursor on its last line
+  -- once it does, which makes Neovim follow the output (scroll up to pause,
+  -- G to follow again)
+  vim.api.nvim_create_autocmd("TermOpen", {
+    group = group,
+    callback = function(ev)
+      vim.schedule(function()
+        if is_open() and vim.api.nvim_win_get_buf(manager.panel_win) == ev.buf then
+          vim.api.nvim_win_call(manager.panel_win, function()
+            vim.cmd("normal! G")
+          end)
+        end
+      end)
+    end,
+  })
+
+  -- easy-dotnet's server reports every exit as an error, ,ns included; the
+  -- notices below replace it
+  local notifications = require("easy-dotnet.rpc.notification-handler")
+  local handle = notifications.handler
+  notifications.handler = function(client, method, params)
+    local message = method == "displayError" and type(params) == "table" and params.message
+    if type(message) == "string" and message:match(" exited with code %-?%d+$") then
+      return
+    end
+    return handle(client, method, params)
+  end
+
+  -- with the log hidden, say when a program ends, and make ,dl show its tab
+  vim.api.nvim_create_autocmd("TermClose", {
+    group = group,
+    callback = function(ev)
+      local code = vim.v.event.status
+      local tab = vim.iter(manager.get_all()):find(function(t)
+        return t.buf == ev.buf and t.owned_by == "server"
+      end)
+      if not tab or stopped[code] then
+        return
+      end
+      vim.schedule(function()
+        if is_open() then
+          if manager.active_id ~= tab.id and code ~= 0 then
+            vim.notify(("%s failed with exit code %d (Tab to see it)"):format(tab.label, code), vim.log.levels.ERROR)
+          end
+          return
+        end
+        manager.set_active(tab.id)
+        if code == 0 then
+          vim.notify(tab.label .. " finished (,dl for the log)", vim.log.levels.INFO)
+        else
+          vim.notify(("%s failed with exit code %d (,dl for the log)"):format(tab.label, code), vim.log.levels.ERROR)
+        end
+      end)
+    end,
+  })
 end
 
 return {
@@ -199,17 +414,16 @@ return {
     -- hence the "profile" commands rather than require("easy-dotnet").debug_default(), which skips them
     keys = {
       { "<leader>ne", dotnet_menu, desc = ".NET menu" },
+      { "<leader>dm", dotnet_menu, desc = ".NET menu" },
       { "<leader>nr", "<cmd>Dotnet run profile default<cr>", desc = "Run startup project" },
       { "<leader>nd", "<cmd>Dotnet debug profile default<cr>", desc = "Debug startup project" },
       { "<leader>nw", "<cmd>Dotnet watch default<cr>", desc = "Watch startup project" },
       -- errors/warnings go to the quickfix list; ]q / [q to walk them
       { "<leader>nb", "<cmd>Dotnet build solution quickfix<cr>", desc = "Build solution" },
       { "<leader>nt", "<cmd>Dotnet testrunner<cr>", desc = "Test runner" },
-      { "<leader>no", output, desc = "Output (run/debug logs)" },
       { "<leader>ns", stop, desc = "Stop run/debug" },
-      -- the older keys, still here for habit
-      { "<leader>dd", "<cmd>Dotnet debug profile default<cr>", desc = "Debug .NET project" },
-      { "<leader>dT", "<cmd>Dotnet testrunner<cr>", desc = "Toggle .NET test runner" },
+      { "<leader>dl", output, desc = ".NET log" },
+      -- the older build key, still here for habit
       { "<leader>cb", "<cmd>Dotnet build solution quickfix<cr>", desc = "Build .NET solution" },
     },
     init = function()
@@ -220,13 +434,22 @@ return {
       })
     end,
     config = function()
-      keep_focus_on_run()
+      normal_mode_on_run()
       require("easy-dotnet").setup({
         -- auto-detect only knows telescope and fzf-lua, not Snacks
         picker = "snacks",
+        -- keep the log after a program exits instead of closing it a second later
+        managed_terminal = { auto_hide = false },
       })
       setup_debug_output()
+      setup_log_float()
     end,
+  },
+
+  -- ,dl is the .NET log; LazyVim has it as dap's "Run Last"
+  {
+    "mfussenegger/nvim-dap",
+    keys = { { "<leader>dl", false } },
   },
 
   {
