@@ -30,7 +30,7 @@ The state is in `theme/state`. `theme` writes what each tool reads (kitty's auto
 
 ## cmode
 
-A separate terminal for writing C, set up like an old console: bare prompt, plain BSD tools, strict C99 builds and a small Neovim config without plugins (`nvim-c/`). It doesn't touch the normal setup.
+When I write C I want a simpler terminal and shell: a bare prompt, plain BSD tools and a small Neovim config without plugins (`nvim-c/`). I like strict C99 because the language is small enough to keep in my head, and without compiler extensions the code builds the same anywhere. `cmode` opens all of this in its own window and doesn't touch the normal setup.
 
 <p align="center"><img src="screenshots/cmode-c64.png" width="60%" alt="cmode: nvim-c with a brainfuck interpreter in the Commodore 64 font and Emacs colours"></p>
 <p align="center"><code>cmode</code></p>
@@ -45,17 +45,13 @@ cmode --no-crt       # Ghostty without the CRT effect
 cmode --no-c64       # my usual font instead of the Commodore 64 one
 ```
 
-It runs in Ghostty, with the screen going through `ghostty-cmode/crt.glsl`, which is my cool-retro-term profile (`cool_retro_term.json`) redone as a shader. `--no-crt` turns the effect off.
+It runs in Ghostty with a CRT shader (`ghostty-cmode/crt.glsl`) and the Commodore 64 font. nvim-c has Emacs-style colours on black.
 
-nvim-c has Emacs-style colours on black (`nvim-c/colors/emacs.lua`): blue keywords, teal types and the names a declaration introduces, and everything else plain. The shell around it uses Modus Vivendi's terminal colours.
+Panes work as in my kitty: `Cmd-D` / `Cmd-Shift-D` split, and `Cmd-h/j/k/l` move between them. A new pane is a cmode shell too.
 
-The font is the Commodore 64 one: Pet Me 64 2Y, the C64's 80-column characters, the same font cool-retro-term uses. At 16 pt each of its pixels lands on whole screen pixels, so it stays sharp, and bold and italic are off because faking them smears the pixels. `--no-c64` starts with my usual font (`theme font`) instead.
+`:Font` in nvim-c, or `cmode font <id>` in the shell, changes the font for that window only.
 
-Panes work as in my kitty: `Cmd-D` / `Cmd-Shift-D` split, and `Cmd-h/j/k/l` move between them. A new pane is a cmode shell too, handy for running a server next to the editor.
-
-`:Font` in nvim-c, or `cmode font <id>` in the shell, changes a window's font, for that window only.
-
-The prompt is just the directory, with the exit code in front when something fails (`[134] ~/src/kilo $`). `CFLAGS` is `-std=c99 -Wall -Wextra -Wpedantic -g -O0 -fsanitize=address,undefined`, so `make foo` builds `foo.c` without a Makefile. In projects with a Makefile, run `bear -- make` once so clangd sees the real flags.
+The prompt is just the directory, with the exit code in front when something fails. `CFLAGS` is `-std=c99 -Wall -Wextra -Wpedantic -g -O0 -fsanitize=address,undefined`, so `make foo` builds `foo.c` without a Makefile. In projects with a Makefile, run `bear -- make` once so clangd sees the real flags.
 
 ### nvim-c
 
@@ -94,11 +90,7 @@ Building and running are commands rather than keys:
 | `:Hex` | hex view (open binaries with `nvim -b`) |
 | `:Font` | this window's font |
 
-The finders are fzf in a floating terminal, with bat previews in the same colours, so nvim-c needs no plugins at all.
-
 `:w` formats C with clang-format (built into clangd), using the nearest `.clang-format`, so `~/.clang-format` unless the project has its own. While typing, indentation follows the file or its `.editorconfig`, and new files get 2 spaces. Anything past column 80 is highlighted.
-
-The statusline is an Emacs mode line, `-UU-:**-  F1  bf.c  62% L218  (C E1 W2)`: `**` is modified (`%%` read-only), then the tab number, file, position, line, and the filetype with clangd's error and warning counts.
 
 </details>
 
