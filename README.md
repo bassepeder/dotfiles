@@ -28,10 +28,6 @@ theme                      # what's set right now
 
 The state is in `theme/state`. `theme` writes what each tool reads (kitty's auto theme files and `font.conf`, `bat/config`, a delta include), all gitignored. Shells that were already open keep the old bat theme until they're restarted.
 
-## Neovim
-
-LazyVim, with `,` as the leader.
-
 ## cmode
 
 A separate terminal for writing C, set up like an old console: bare prompt, plain BSD tools, strict C99 builds and a small Neovim config without plugins (`nvim-c/`). It doesn't touch the normal setup.
