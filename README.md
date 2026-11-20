@@ -26,7 +26,7 @@ theme font c64             # jetbrains, fira, terminus or c64
 theme                      # what's set right now
 ```
 
-The state is in `theme/state`. `theme` writes what each tool reads (kitty's auto theme files and `font.conf`, `bat/config`, a delta include), all gitignored. Shells that were already open keep the old bat theme until they're restarted.
+The state is in `theme/state`. `theme` writes what each tool reads (kitty's auto theme files and `font.conf`, `bat/config`, a delta include), all gitignored.
 
 ## cmode
 
