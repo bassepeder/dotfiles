@@ -2,6 +2,17 @@
 
 My macOS setup. yabai and skhd for tiling, JankyBorders, Neovim (LazyVim) and Neovide, kitty, zsh with starship, lazygit, delta and btop. Plus cmode, a separate terminal for writing C.
 
+<table>
+  <tr>
+    <td><img src="screenshots/desktop-light.png" alt="The desktop in light mode: kitty running a Vite dev server and btop on the left, Neovide with a Vue component and the file explorer on the right, in Catppuccin Latte"></td>
+    <td><img src="screenshots/desktop-dark.png" alt="The same desktop in dark mode, in Catppuccin Mocha"></td>
+  </tr>
+  <tr>
+    <td align="center">Light (Catppuccin Latte)</td>
+    <td align="center">Dark (Catppuccin Mocha)</td>
+  </tr>
+</table>
+
 ## Theme and font
 
 Kitty, Neovim, delta, lazygit, bat and btop share one theme, Catppuccin or Modus. It follows the macOS appearance (Latte/Mocha, Operandi/Vivendi) unless I pin it to light or dark. Kitty and Neovide share a font as well.
