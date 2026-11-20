@@ -103,9 +103,7 @@ if command -v yabai >/dev/null 2>&1; then
     echo "⚠️  could not restart yabai — try: yabai --restart-service"
   fi
 else
-  # interactive (sudo, permission prompts), so not run from here
-  echo "⚠️  yabai is not installed. It comes from a fork with macOS 27 fixes:"
-  echo "      curl -fsSL https://raw.githubusercontent.com/bassepeder/yabai/macos27/scripts/install-fork.sh | bash"
+  echo "⚠️  yabai is not installed — run: brew bundle"
 fi
 
 # TCC grants are keyed to the resolved Cellar path, so `brew upgrade` silently revokes them

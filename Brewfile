@@ -1,8 +1,9 @@
-# yabai is built from bassepeder/yabai instead (see install.sh); skhd's launchd label is still com.koekeishiya.skhd
+# skhd's launchd label is still com.koekeishiya.skhd
 tap "asmvik/formulae"
 tap "felixkratz/formulae"
 tap "writronic/tap"
 
+brew "asmvik/formulae/yabai"
 brew "asmvik/formulae/skhd"
 brew "felixkratz/formulae/borders"
 

@@ -105,8 +105,6 @@ brew bundle
 
 `install.sh` symlinks the configs into place and checks that yabai and skhd still have their macOS permissions. It also downloads the Commodore 64 font (Pet Me 64 2Y), which Homebrew doesn't have.
 
-yabai isn't in the Brewfile. I run my own fork with fixes for macOS 27, see `yabai/README.md`.
-
 ## Local overrides
 
 Anything machine specific (work vs. personal, secrets) lives in untracked files that the configs source if they exist:
