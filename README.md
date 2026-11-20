@@ -30,21 +30,7 @@ The state is in `theme/state`. `theme` writes what each tool reads (kitty's auto
 
 ## Neovim
 
-LazyVim, with `,` as the leader. The languages I work in each get a menu of everything, like the one Metals has, so I don't have to remember commands.
-
-**.NET** (easy-dotnet): `,ne` or `,dm` opens the menu. The everyday things have their own keys:
-
-| Key | |
-|---|---|
-| `,nr` `,nd` `,nw` | run, debug or watch the startup project |
-| `,nb` | build the solution, problems in the quickfix list |
-| `,nt` | test runner |
-| `,ns` | stop the run or the debug session |
-| `,dl` | the log: a floating window with a tab for each run, watch and debug session. It stays after the program exits, and you get a notice when one fails while it's hidden |
-
-dap-ui stays closed when a debug session starts and opens its sidebar at the first breakpoint. `,du` toggles it.
-
-**Scala** (Metals): `,me` for the Metals commands, `,mc` to compile.
+LazyVim, with `,` as the leader.
 
 ## cmode
 
