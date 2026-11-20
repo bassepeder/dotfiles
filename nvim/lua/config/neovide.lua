@@ -1,7 +1,7 @@
 -- https://neovide.dev/configuration.html
 
 -- Appearance
-vim.g.neovide_normal_opacity = 0.95
+vim.g.neovide_normal_opacity = 0.97
 vim.g.neovide_floating_corner_radius = 0.5
 vim.g.neovide_proxy_icon = true
 
