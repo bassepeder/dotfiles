@@ -756,6 +756,9 @@ vim.g.netrw_banner = 0
 vim.g.netrw_liststyle = 3
 vim.g.netrw_browse_split = 4
 vim.g.netrw_winsize = 25
+-- build output (object files, .d dependency files, .dSYM debug bundles) is
+-- hidden; `a` in the explorer shows it again
+vim.g.netrw_list_hide = [[\.o$,\.d$,\.dSYM/\=$]]
 -- Opens on the working directory with the current file revealed: the folders
 -- on the way are opened and the cursor is put on it, like Snacks' explorer
 local function explorer()
