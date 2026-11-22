@@ -7,3 +7,6 @@ kitty/dark-theme.auto.conf
 bat/config
 kitty/font.conf
 scripts/mongo-prod-to-staging.sh
+
+# work specific
+nvim/lua/plugins/gitlab.lua
