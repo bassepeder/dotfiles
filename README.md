@@ -30,7 +30,7 @@ The state is in `theme/state`. `theme` writes what each tool reads (kitty's auto
 
 ## cmode
 
-When I write C I want a simpler terminal and shell: a bare prompt, plain BSD tools and a small Neovim config without plugins (`nvim-c/`). I like strict C99 because the language is small enough to keep in my head, and without compiler extensions the code builds the same anywhere. `cmode` opens all of this in its own window and doesn't touch the normal setup.
+When I write C I want a simpler terminal and shell: a bare prompt, plain BSD tools and a small Neovim config without plugins (`nvim-c/`). I like strict C11 because the language is small enough to keep in my head, and without compiler extensions the code builds the same anywhere. `cmode` opens all of this in its own window and doesn't touch the normal setup.
 
 <p align="center"><img src="screenshots/cmode-c64.png" width="60%" alt="cmode: nvim-c with a brainfuck interpreter in the Commodore 64 font and Emacs colours"></p>
 <p align="center"><code>cmode</code></p>
@@ -51,7 +51,7 @@ Panes work as in my kitty: `Cmd-D` / `Cmd-Shift-D` split, and `Cmd-h/j/k/l` move
 
 `:Font` in nvim-c, or `cmode font <id>` in the shell, changes the font for that window only.
 
-The prompt is just the directory, with the exit code in front when something fails. `CFLAGS` is `-std=c99 -Wall -Wextra -Wpedantic -g -O0 -fsanitize=address,undefined`, so `make foo` builds `foo.c` without a Makefile. In projects with a Makefile, run `bear -- make` once so clangd sees the real flags.
+The prompt is just the directory, with the exit code in front when something fails. `CFLAGS` is `-std=c11 -Wall -Wextra -Wpedantic -g -O0 -fsanitize=address,undefined`, so `make foo` builds `foo.c` without a Makefile. In projects with a Makefile, run `bear -- make` once so clangd sees the real flags.
 
 ### nvim-c
 

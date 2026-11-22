@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Open a stripped-down console for writing C in Ghostty: the Commodore 64 font
-# on black, a CRT pass, a bare zsh prompt, plain BSD tools, strict C99 builds
+# on black, a CRT pass, a bare zsh prompt, plain BSD tools, strict C11 builds
 # and a plugin-free Neovim (nvim-c).
 #
 #   cmode [--no-crt] [--no-c64] [dir]

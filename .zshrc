@@ -67,14 +67,14 @@ alias v="nvim"
 command -v fnm >/dev/null && eval "$(fnm env --use-on-cd)"
 export STARSHIP_CACHE="$HOME/.cache/starship"
 if [ -n "$CMODE" ]; then
-  # cmode (scripts/cmode): plain BSD tools, a bare prompt, strict C99 builds
+  # cmode (scripts/cmode): plain BSD tools, a bare prompt, strict C11 builds
   # (`make foo` builds foo.c with these via make's built-in rules) and nvim-c
   unalias ls ll la lt cat 2>/dev/null
   alias ll='ls -l' la='ls -la'
   unset MANPAGER MANROFFOPT
   export NVIM_APPNAME=nvim-c
   export CC=cc
-  export CFLAGS='-std=c99 -Wall -Wextra -Wpedantic -g -O0 -fsanitize=address,undefined'
+  export CFLAGS='-std=c11 -Wall -Wextra -Wpedantic -g -O0 -fsanitize=address,undefined'
   PROMPT='%(?..[%?] )%~ $ '
   RPROMPT=''
 else

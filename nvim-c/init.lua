@@ -219,7 +219,7 @@ vim.lsp.config("clangd", {
   filetypes = { "c", "cpp", "objc" },
   root_markers = { "compile_commands.json", "compile_flags.txt", "Makefile", ".git" },
   -- used when there is no compile_commands.json (`bear -- make` writes one)
-  init_options = { fallbackFlags = { "-std=c99", "-Wall", "-Wextra", "-Wpedantic" } },
+  init_options = { fallbackFlags = { "-std=c11", "-Wall", "-Wextra", "-Wpedantic" } },
 })
 vim.lsp.enable("clangd")
 vim.api.nvim_create_autocmd("LspAttach", {
@@ -419,7 +419,7 @@ vim.api.nvim_create_user_command("Asm", function()
   vim.cmd("silent! write")
   local file = vim.fn.expand("%:p")
   local cmd = { vim.env.CC or "cc" }
-  for flag in (vim.env.CFLAGS or "-std=c99"):gmatch("%S+") do
+  for flag in (vim.env.CFLAGS or "-std=c11"):gmatch("%S+") do
     if not flag:match("^%-fsanitize") and not flag:match("^%-O") and flag ~= "-g" then
       cmd[#cmd + 1] = flag
     end
