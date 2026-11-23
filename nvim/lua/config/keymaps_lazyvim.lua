@@ -42,7 +42,31 @@ map("n", "<C-s>", "<Cmd>silent! update | redraw<CR>", { desc = "Save" })
 map({ "i", "x" }, "<C-s>", "<Esc><Cmd>silent! update | redraw<CR>", { desc = "Save and go to Normal mode" })
 
 -- new file
-map("n", "<leader>fn", "<cmd>enew<cr>", { desc = "New File" })
+-- in the explorer: ask for a name and create it in the highlighted folder (a
+-- highlighted file's own folder), then open it; elsewhere: an empty buffer
+map("n", "<leader>fn", function()
+  local picker = vim.iter(Snacks.picker.get({ source = "explorer" })):find(function(p)
+    return p:current_win() ~= nil
+  end)
+  if not picker then
+    return vim.cmd("enew")
+  end
+  local dir = picker:dir()
+  Snacks.input({ prompt = "New file in " .. vim.fn.fnamemodify(dir, ":~:.") .. "/" }, function(name)
+    if not name or name:match("^%s*$") then
+      return
+    end
+    local path = vim.fs.normalize(dir .. "/" .. name)
+    if vim.uv.fs_stat(path) then
+      return Snacks.notify.warn("Already exists: " .. path)
+    end
+    vim.fn.mkdir(vim.fs.dirname(path), "p")
+    io.open(path, "w"):close()
+    local main = vim.api.nvim_win_is_valid(picker.main) and picker.main or vim.fn.win_getid(vim.fn.winnr("#"))
+    vim.api.nvim_set_current_win(main)
+    vim.cmd.edit(vim.fn.fnameescape(path))
+  end)
+end, { desc = "New File (in explorer folder)" })
 
 -- formatting
 map({ "n", "v" }, "<leader>cf", function()
